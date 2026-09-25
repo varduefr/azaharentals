@@ -1,0 +1,8 @@
+{
+  "name": "Gestión de Alojamientos Turísticos en Castellón | Azahar",
+  "description": "Gestión integral de alquiler vacacional y alojamientos turísticos en Castellón. Maximizamos la rentabilidad para propietarios y tramitamos tu licencia.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

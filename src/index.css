@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-primary: #2563eb;
+    --color-primary-hover: #1d4ed8;
+    --color-primary-light: #eff6ff;
+    --color-primary-border: #bfdbfe;
+    --color-secondary: #0f172a;
+    --color-accent: #06b6d4;
+    --color-accent-light: #cffafe;
+  }
+
+  /* Custom Font Families */
+  .font-outfit {
+    font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+
+  .font-serif {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+
+  .font-sans {
+    font-family: 'Plus Jakarta Sans', 'DM Sans', system-ui, -apple-system, sans-serif;
+  }
+
+  .font-space {
+    font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Dynamic Brand Utility Helpers */
+.bg-brand-primary {
+  background-color: var(--color-primary);
+}
+
+.hover\:bg-brand-primary-hover:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.text-brand-primary {
+  color: var(--color-primary);
+}
+
+.border-brand-primary {
+  border-color: var(--color-primary);
+}
+
+.bg-brand-light {
+  background-color: var(--color-primary-light);
+}
+
+.border-brand-light {
+  border-color: var(--color-primary-border);
+}
+
+.text-brand-accent {
+  color: var(--color-accent);
+}
+
+/* Smooth transition for theme colors */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Custom styling for HTML5 Date Picker Indicator with bluish Mediterranean tone */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  /* Bluish tint: turns default icon into an attractive vibrant sky-blue/azure */
+  filter: invert(55%) sepia(85%) saturate(1800%) hue-rotate(185deg) brightness(100%) contrast(98%);
+  opacity: 0.9;
+  border-radius: 4px;
+  padding: 2px;
+  transition: transform 0.15s ease, filter 0.15s ease, background-color 0.15s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  filter: invert(70%) sepia(90%) saturate(2200%) hue-rotate(190deg) brightness(110%) contrast(105%);
+  opacity: 1;
+  transform: scale(1.1);
+  background-color: rgba(56, 189, 248, 0.15);
+}
