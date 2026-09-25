@@ -6,7 +6,6 @@ import {
   Eye, 
   EyeOff, 
   ArrowLeft, 
-  ShieldCheck, 
   AlertCircle, 
   CheckCircle2, 
   HelpCircle,
@@ -21,7 +20,7 @@ interface AdminLoginProps {
 }
 
 export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackToPublic }) => {
-  const [identifier, setIdentifier] = useState('admin');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -213,17 +212,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
                 </>
               )}
             </button>
-
-            {/* Quick Helper Badge for Initial Setup */}
-            <div className="mt-4 p-3 rounded-xl bg-slate-950 border border-slate-800/80 text-[11px] text-slate-400">
-              <div className="flex items-center gap-1.5 text-cyan-400 font-semibold mb-1">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Credenciales por defecto:</span>
-              </div>
-              <p className="leading-relaxed">
-                Usuario: <code className="text-white font-mono bg-slate-800 px-1 py-0.5 rounded">admin</code> | Contraseña: <code className="text-white font-mono bg-slate-800 px-1 py-0.5 rounded">azahar2026</code>. Podrás cambiarla una vez dentro o restablecerla.
-              </p>
-            </div>
           </form>
         ) : (
           /* RESET PASSWORD FORM */
