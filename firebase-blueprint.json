@@ -106,12 +106,40 @@
         "basePricePerNight",
         "maxGuests"
       ]
+    },
+    "ApartmentPhoto": {
+      "title": "ApartmentPhoto",
+      "description": "Fotografía individual de un apartamento en subcolección para evitar el límite de 1MB por documento",
+      "type": "object",
+      "properties": {
+        "index": {
+          "type": "number",
+          "description": "Orden posicional de la foto"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL o imagen optimizada",
+          "maxLength": 1000000
+        },
+        "caption": {
+          "type": "string",
+          "description": "Pie de foto descriptivo",
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "url"
+      ]
     }
   },
   "firestore": {
     "/apartments/{apartmentId}": {
       "schema": "Apartment",
       "description": "Colección de apartamentos turísticos de Azahar Rentals"
+    },
+    "/apartments/{apartmentId}/photos/{photoId}": {
+      "schema": "ApartmentPhoto",
+      "description": "Subcolección de fotografías individuales del alojamiento"
     }
   }
 }

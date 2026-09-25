@@ -113,9 +113,59 @@ export function clearStoredAdminSession(): void {
 }
 
 /**
- * Fetch all apartments from Cloud Firestore database.
- * If Firestore is empty (initial deployment), seeds with initial portfolio.
- * Falls back to local storage if offline.
+ * Saves each photo in a dedicated subcollection: /apartments/{apartmentId}/photos/{photoId}
+ * This permanently bypasses Firestore's 1MB single-document limit, allowing unlimited photos per property.
+ */
+async function saveApartmentPhotosSubcollection(apartmentId: string, photos: ApartmentPhoto[]): Promise<void> {
+  const colRef = collection(db, 'apartments', apartmentId, 'photos');
+
+  // Save each individual photo as its own document (~40KB - 80KB)
+  for (let i = 0; i < photos.length; i++) {
+    const p = photos[i];
+    const photoDocRef = doc(db, 'apartments', apartmentId, 'photos', `photo_${i}`);
+    await setDoc(photoDocRef, {
+      index: i,
+      url: p.url,
+      caption: p.caption || `Foto ${i + 1}`,
+      updatedAt: new Date().toISOString()
+    });
+  }
+
+  // Cleanup removed photos if count decreased
+  try {
+    const snap = await getDocs(colRef);
+    for (const d of snap.docs) {
+      const idx = d.data().index;
+      if (typeof idx === 'number' && idx >= photos.length) {
+        await deleteDoc(doc(db, 'apartments', apartmentId, 'photos', d.id));
+      }
+    }
+  } catch (e) {
+    console.warn('Error cleaning excess photo documents:', e);
+  }
+}
+
+/**
+ * Loads all photos from the subcollection, falling back to embedded photos or seed
+ */
+async function loadApartmentPhotosSubcollection(apartmentId: string, fallbackPhotos: ApartmentPhoto[] = []): Promise<ApartmentPhoto[]> {
+  try {
+    const colRef = collection(db, 'apartments', apartmentId, 'photos');
+    const snap = await getDocs(colRef);
+    if (!snap.empty) {
+      const sorted = snap.docs
+        .map((d) => d.data() as { index: number; url: string; caption: string })
+        .sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+      return sorted.map((p) => ({ url: p.url, caption: p.caption || '' }));
+    }
+  } catch (err) {
+    console.warn(`Could not read photos subcollection for ${apartmentId}:`, err);
+  }
+  return fallbackPhotos;
+}
+
+/**
+ * Fetch all apartments from Cloud Firestore database with photos from subcollections.
  */
 export async function fetchApartments(): Promise<FeaturedApartment[]> {
   try {
@@ -123,10 +173,16 @@ export async function fetchApartments(): Promise<FeaturedApartment[]> {
     const snapshot = await getDocs(colRef);
 
     if (!snapshot.empty) {
-      const list = snapshot.docs.map((d) => ({
-        id: d.id,
-        ...d.data()
-      })) as FeaturedApartment[];
+      const list = await Promise.all(snapshot.docs.map(async (d) => {
+        const raw = d.data() as FeaturedApartment;
+        const initialPhotos = Array.isArray(raw.photos) && raw.photos.length > 0 ? raw.photos : [];
+        const loadedPhotos = await loadApartmentPhotosSubcollection(d.id, initialPhotos);
+        return {
+          ...raw,
+          id: d.id,
+          photos: loadedPhotos.length > 0 ? loadedPhotos : (FEATURED_APARTMENTS.find((a) => a.id === d.id)?.photos || [])
+        };
+      }));
 
       saveLocalApartments(list);
       return list;
@@ -135,7 +191,15 @@ export async function fetchApartments(): Promise<FeaturedApartment[]> {
     // Seed initial portfolio to Cloud Firestore
     console.log('Sembrando catálogo inicial de Azahar Rentals en Cloud Firestore...');
     for (const apt of FEATURED_APARTMENTS) {
-      await setDoc(doc(db, 'apartments', apt.id), apt);
+      const { photos, ...rest } = apt;
+      await setDoc(doc(db, 'apartments', apt.id), {
+        ...rest,
+        photosCount: photos?.length || 0,
+        updatedAt: new Date().toISOString()
+      });
+      if (photos && photos.length > 0) {
+        await saveApartmentPhotosSubcollection(apt.id, photos);
+      }
     }
     saveLocalApartments(FEATURED_APARTMENTS);
     return FEATURED_APARTMENTS;
@@ -152,18 +216,24 @@ export async function fetchApartments(): Promise<FeaturedApartment[]> {
 
 /**
  * Real-time listener for apartments collection.
- * Triggers callback immediately on data change from anywhere (Admin, other tabs, other users).
+ * Triggers callback immediately on data change from anywhere.
  */
 export function subscribeApartments(onUpdate: (apartments: FeaturedApartment[]) => void): Unsubscribe {
   const colRef = collection(db, 'apartments');
   return onSnapshot(
     colRef,
-    (snapshot) => {
+    async (snapshot) => {
       if (!snapshot.empty) {
-        const list = snapshot.docs.map((d) => ({
-          id: d.id,
-          ...d.data()
-        })) as FeaturedApartment[];
+        const list = await Promise.all(snapshot.docs.map(async (d) => {
+          const raw = d.data() as FeaturedApartment;
+          const initialPhotos = Array.isArray(raw.photos) && raw.photos.length > 0 ? raw.photos : [];
+          const loadedPhotos = await loadApartmentPhotosSubcollection(d.id, initialPhotos);
+          return {
+            ...raw,
+            id: d.id,
+            photos: loadedPhotos.length > 0 ? loadedPhotos : (FEATURED_APARTMENTS.find((a) => a.id === d.id)?.photos || [])
+          };
+        }));
         saveLocalApartments(list);
         onUpdate(list);
       }
@@ -208,7 +278,19 @@ export async function createApartmentApi(data: Partial<FeaturedApartment>): Prom
   };
 
   try {
-    await setDoc(doc(db, 'apartments', id), newApt);
+    // 1. Save photos into subcollection
+    if (newApt.photos && newApt.photos.length > 0) {
+      await saveApartmentPhotosSubcollection(id, newApt.photos);
+    }
+
+    // 2. Save parent document without large photo payload (~2KB total)
+    const { photos, ...parentData } = newApt;
+    await setDoc(doc(db, 'apartments', id), {
+      ...parentData,
+      photosCount: newApt.photos.length,
+      coverPhoto: newApt.photos[0]?.url || '',
+      updatedAt: new Date().toISOString()
+    });
   } catch (err) {
     console.error('Error saving new apartment to Firestore:', err);
     handleFirestoreError(err, OperationType.CREATE, `apartments/${id}`);
@@ -227,6 +309,7 @@ export async function createApartmentApi(data: Partial<FeaturedApartment>): Prom
 
 /**
  * Update an existing apartment and persist in Cloud Firestore.
+ * Automatically saves photos to subcollection to prevent the 1MB document limit error.
  */
 export async function updateApartmentApi(id: string, data: Partial<FeaturedApartment>): Promise<FeaturedApartment> {
   const current = getLocalApartments();
@@ -238,7 +321,22 @@ export async function updateApartmentApi(id: string, data: Partial<FeaturedApart
   } as FeaturedApartment;
 
   try {
-    await setDoc(doc(db, 'apartments', id), updatedApt, { merge: true });
+    // 1. Save photos into subcollection if updated
+    if (data.photos && Array.isArray(data.photos)) {
+      await saveApartmentPhotosSubcollection(id, data.photos);
+    }
+
+    // 2. Save parent document stripped of oversized base64 arrays
+    const { photos, ...parentData } = updatedApt;
+    const cleanParentDoc = {
+      ...parentData,
+      photosCount: updatedApt.photos?.length || 0,
+      coverPhoto: updatedApt.photos?.[0]?.url || '',
+      updatedAt: new Date().toISOString()
+    };
+
+    // Use full overwrite without merge on parent to flush any oversized photos field
+    await setDoc(doc(db, 'apartments', id), cleanParentDoc);
   } catch (err) {
     console.error('Error updating apartment in Firestore:', err);
     handleFirestoreError(err, OperationType.UPDATE, `apartments/${id}`);
@@ -255,10 +353,15 @@ export async function updateApartmentApi(id: string, data: Partial<FeaturedApart
 }
 
 /**
- * Delete an apartment permanently from Cloud Firestore.
+ * Delete an apartment permanently from Cloud Firestore including subcollections.
  */
 export async function deleteApartmentApi(id: string): Promise<boolean> {
   try {
+    // Delete photos subcollection
+    const snap = await getDocs(collection(db, 'apartments', id, 'photos'));
+    for (const d of snap.docs) {
+      await deleteDoc(doc(db, 'apartments', id, 'photos', d.id));
+    }
     await deleteDoc(doc(db, 'apartments', id));
   } catch (err) {
     console.error('Error deleting apartment in Firestore:', err);

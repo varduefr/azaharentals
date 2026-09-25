@@ -32,6 +32,12 @@ service cloud.firestore {
       allow create: if isValidId(apartmentId) && isValidApartment(request.resource.data);
       allow update: if isValidId(apartmentId) && isValidApartment(request.resource.data);
       allow delete: if isValidId(apartmentId);
+
+      // Subcollection for individual photos (bypasses the 1MB document limit)
+      match /photos/{photoId} {
+        allow get, list: if true;
+        allow create, update, delete: if isValidId(apartmentId) && isValidId(photoId);
+      }
     }
 
     match /settings/{settingId} {
