@@ -1,0 +1,117 @@
+{
+  "entities": {
+    "Apartment": {
+      "title": "Apartment",
+      "description": "Propiedad o alojamiento turístico gestionado por Azahar Rentals en Castellón",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Identificador único del apartamento",
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "description": "Nombre comercial del alojamiento",
+          "maxLength": 200
+        },
+        "town": {
+          "type": "string",
+          "description": "Municipio donde se ubica",
+          "maxLength": 100
+        },
+        "zone": {
+          "type": "string",
+          "description": "Zona o barrio",
+          "maxLength": 150
+        },
+        "licenseNumber": {
+          "type": "string",
+          "description": "Número de licencia turística oficial de la Generalitat Valenciana (VT)",
+          "maxLength": 50
+        },
+        "rating": {
+          "type": "number",
+          "description": "Puntuación media de reseñas"
+        },
+        "reviewsCount": {
+          "type": "number",
+          "description": "Número total de valoraciones"
+        },
+        "basePricePerNight": {
+          "type": "number",
+          "description": "Precio base por noche en euros"
+        },
+        "maxGuests": {
+          "type": "number",
+          "description": "Capacidad máxima de huéspedes"
+        },
+        "bedrooms": {
+          "type": "number",
+          "description": "Número de dormitorios"
+        },
+        "bathrooms": {
+          "type": "number",
+          "description": "Número de baños"
+        },
+        "squareMeters": {
+          "type": "number",
+          "description": "Superficie en metros cuadrados"
+        },
+        "isFirstLineBeach": {
+          "type": "boolean",
+          "description": "Indica si se sitúa en primera línea de playa"
+        },
+        "distanceToBeach": {
+          "type": "string",
+          "description": "Distancia a la playa o costa",
+          "maxLength": 100
+        },
+        "highlights": {
+          "type": "array",
+          "description": "Puntos destacados del alojamiento"
+        },
+        "amenities": {
+          "type": "array",
+          "description": "Servicios y comodidades ofrecidos"
+        },
+        "description": {
+          "type": "string",
+          "description": "Descripción completa de la propiedad",
+          "maxLength": 5000
+        },
+        "photos": {
+          "type": "array",
+          "description": "Listado de fotos del apartamento"
+        },
+        "bookingIcalUrl": {
+          "type": "string",
+          "description": "URL de sincronización iCal con Booking.com",
+          "maxLength": 1000
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Estado de publicación en la web"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Fecha y hora de última actualización ISO",
+          "maxLength": 50
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "town",
+        "basePricePerNight",
+        "maxGuests"
+      ]
+    }
+  },
+  "firestore": {
+    "/apartments/{apartmentId}": {
+      "schema": "Apartment",
+      "description": "Colección de apartamentos turísticos de Azahar Rentals"
+    }
+  }
+}

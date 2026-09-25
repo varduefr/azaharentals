@@ -44,7 +44,7 @@ import {
   Maximize2
 } from 'lucide-react';
 import { FEATURED_APARTMENTS, FeaturedApartment, ApartmentPhoto } from '../data/featuredApartments';
-import { fetchApartments } from '../services/apartmentService';
+import { fetchApartments, subscribeApartments } from '../services/apartmentService';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import { sendEmailNotification } from '../services/emailService';
@@ -133,33 +133,36 @@ export const FeaturedApartmentsSection: React.FC = () => {
   );
 
   useEffect(() => {
-    const loadData = () => {
-      fetchApartments().then((list) => {
-        if (list && list.length > 0) {
-          const sanitized = list.map((apt) => ({
-            ...apt,
-            photos: (apt.photos || []).map((p) => ({
-              ...p,
-              url: normalizePhotoUrl(p.url)
-            }))
-          }));
-          setApartments(sanitized);
-        }
-      }).catch((e) => {
-        console.warn('Usando catálogo local:', e);
-      });
+    const handleListUpdate = (list: FeaturedApartment[]) => {
+      if (list && list.length > 0) {
+        const sanitized = list.map((apt) => ({
+          ...apt,
+          photos: (apt.photos || []).map((p) => ({
+            ...p,
+            url: normalizePhotoUrl(p.url)
+          }))
+        }));
+        setApartments(sanitized);
+      }
     };
 
-    loadData();
+    // Initial fetch from Cloud Firestore
+    fetchApartments().then(handleListUpdate).catch((e) => {
+      console.warn('Usando catálogo local:', e);
+    });
+
+    // Real-time listener for Firestore changes across all clients/devices
+    const unsubscribeFirestore = subscribeApartments(handleListUpdate);
 
     const handleUpdate = () => {
-      loadData();
+      fetchApartments().then(handleListUpdate).catch(() => {});
     };
 
     window.addEventListener('azahar_apartments_updated', handleUpdate);
     window.addEventListener('focus', handleUpdate);
 
     return () => {
+      unsubscribeFirestore();
       window.removeEventListener('azahar_apartments_updated', handleUpdate);
       window.removeEventListener('focus', handleUpdate);
     };

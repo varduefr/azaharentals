@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidApartment(data) {
+      return data.keys().hasAll(['id', 'name', 'town', 'basePricePerNight', 'maxGuests']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() <= 200 &&
+             data.town is string && data.town.size() <= 100 &&
+             data.basePricePerNight is number && data.basePricePerNight >= 0 &&
+             data.maxGuests is number && data.maxGuests >= 1 &&
+             (!('photos' in data) || data.photos is list) &&
+             (!('amenities' in data) || data.amenities is list) &&
+             (!('highlights' in data) || data.highlights is list);
+    }
+
+    match /apartments/{apartmentId} {
+      // Public visitors can browse apartments and details
+      allow get, list: if true;
+
+      // Admin operations for managing apartment catalog
+      allow create: if isValidId(apartmentId) && isValidApartment(request.resource.data);
+      allow update: if isValidId(apartmentId) && isValidApartment(request.resource.data);
+      allow delete: if isValidId(apartmentId);
+    }
+
+    match /settings/{settingId} {
+      allow read, write: if isValidId(settingId);
+    }
+  }
+}

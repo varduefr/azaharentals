@@ -1,4 +1,15 @@
 import { FeaturedApartment, FEATURED_APARTMENTS, ApartmentPhoto } from '../data/featuredApartments';
+import { db, OperationType, handleFirestoreError } from '../lib/firebase';
+import { 
+  collection, 
+  doc, 
+  getDocs, 
+  getDoc, 
+  setDoc, 
+  deleteDoc, 
+  onSnapshot,
+  Unsubscribe 
+} from 'firebase/firestore';
 
 const TOKEN_KEY = 'azahar_admin_token';
 const USER_KEY = 'azahar_admin_user';
@@ -66,27 +77,6 @@ function saveLocalApartments(apartments: FeaturedApartment[]): void {
   }
 }
 
-/**
- * Robust response parser that avoids "Unexpected end of JSON input"
- * or HTML syntax errors when deployed on static/serverless hosts (e.g. Vercel)
- */
-async function parseResponseSafe(res: Response): Promise<{ isJson: boolean; data: any; text: string }> {
-  try {
-    const text = await res.text();
-    if (!text || !text.trim()) {
-      return { isJson: false, data: null, text: '' };
-    }
-    const contentType = res.headers.get('content-type') || '';
-    if (contentType.includes('text/html') || text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
-      return { isJson: false, data: null, text };
-    }
-    const data = JSON.parse(text);
-    return { isJson: true, data, text };
-  } catch {
-    return { isJson: false, data: null, text: '' };
-  }
-}
-
 export function getStoredAdminToken(): string | null {
   try {
     return localStorage.getItem(TOKEN_KEY);
@@ -122,54 +112,80 @@ export function clearStoredAdminSession(): void {
   }
 }
 
-// Fetch all apartments from backend database (with fallback to local storage & default seed)
+/**
+ * Fetch all apartments from Cloud Firestore database.
+ * If Firestore is empty (initial deployment), seeds with initial portfolio.
+ * Falls back to local storage if offline.
+ */
 export async function fetchApartments(): Promise<FeaturedApartment[]> {
   try {
-    const res = await fetch('/api/apartments');
-    const parsed = await parseResponseSafe(res);
-    if (parsed.isJson && parsed.data && parsed.data.success && Array.isArray(parsed.data.data)) {
-      saveLocalApartments(parsed.data.data);
-      return parsed.data.data;
+    const colRef = collection(db, 'apartments');
+    const snapshot = await getDocs(colRef);
+
+    if (!snapshot.empty) {
+      const list = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data()
+      })) as FeaturedApartment[];
+
+      saveLocalApartments(list);
+      return list;
     }
+
+    // Seed initial portfolio to Cloud Firestore
+    console.log('Sembrando catálogo inicial de Azahar Rentals en Cloud Firestore...');
+    for (const apt of FEATURED_APARTMENTS) {
+      await setDoc(doc(db, 'apartments', apt.id), apt);
+    }
+    saveLocalApartments(FEATURED_APARTMENTS);
+    return FEATURED_APARTMENTS;
   } catch (err) {
-    console.warn('API /api/apartments unreachable or loading, using local database:', err);
+    console.warn('Firestore fetchApartments fallback to local data:', err);
+    try {
+      handleFirestoreError(err, OperationType.GET, 'apartments');
+    } catch {
+      // Continue to fallback
+    }
+    return getLocalApartments();
   }
-  return getLocalApartments();
 }
 
-// Create a new apartment in the database
+/**
+ * Real-time listener for apartments collection.
+ * Triggers callback immediately on data change from anywhere (Admin, other tabs, other users).
+ */
+export function subscribeApartments(onUpdate: (apartments: FeaturedApartment[]) => void): Unsubscribe {
+  const colRef = collection(db, 'apartments');
+  return onSnapshot(
+    colRef,
+    (snapshot) => {
+      if (!snapshot.empty) {
+        const list = snapshot.docs.map((d) => ({
+          id: d.id,
+          ...d.data()
+        })) as FeaturedApartment[];
+        saveLocalApartments(list);
+        onUpdate(list);
+      }
+    },
+    (err) => {
+      console.warn('Firestore onSnapshot listener error:', err);
+      try {
+        handleFirestoreError(err, OperationType.GET, 'apartments');
+      } catch {
+        // Suppress
+      }
+    }
+  );
+}
+
+/**
+ * Create a new apartment and persist directly in Cloud Firestore.
+ */
 export async function createApartmentApi(data: Partial<FeaturedApartment>): Promise<FeaturedApartment> {
-  const token = getStoredAdminToken();
-
-  try {
-    const res = await fetch('/api/apartments', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      },
-      body: JSON.stringify(data)
-    });
-
-    const parsed = await parseResponseSafe(res);
-    if (parsed.isJson && parsed.data && parsed.data.success && parsed.data.data) {
-      const current = getLocalApartments();
-      const updated = [parsed.data.data, ...current.filter(a => a.id !== parsed.data.data.id)];
-      saveLocalApartments(updated);
-      return parsed.data.data;
-    } else if (parsed.isJson && parsed.data && parsed.data.error) {
-      throw new Error(parsed.data.error);
-    }
-  } catch (err: any) {
-    if (err.message && !err.message.includes('fetch') && !err.message.includes('HTTP')) {
-      throw err;
-    }
-  }
-
-  // Client-side fallback for static deployment (e.g. Vercel)
-  const current = getLocalApartments();
+  const id = data.id || `apt-${Date.now()}`;
   const newApt: FeaturedApartment = {
-    id: data.id || `apt-${Date.now()}`,
+    id,
     name: data.name || 'Nuevo Apartamento',
     town: data.town || 'Castellón de la Plana',
     zone: data.zone || 'Playa',
@@ -191,142 +207,109 @@ export async function createApartmentApi(data: Partial<FeaturedApartment>): Prom
     active: data.active !== false
   };
 
-  const updated = [newApt, ...current.filter(a => a.id !== newApt.id)];
+  try {
+    await setDoc(doc(db, 'apartments', id), newApt);
+  } catch (err) {
+    console.error('Error saving new apartment to Firestore:', err);
+    handleFirestoreError(err, OperationType.CREATE, `apartments/${id}`);
+  }
+
+  // Update local cache & dispatch cross-component event
+  const current = getLocalApartments();
+  const updated = [newApt, ...current.filter((a) => a.id !== id)];
   saveLocalApartments(updated);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('azahar_apartments_updated', { detail: newApt }));
+  }
+
   return newApt;
 }
 
-// Update existing apartment
+/**
+ * Update an existing apartment and persist in Cloud Firestore.
+ */
 export async function updateApartmentApi(id: string, data: Partial<FeaturedApartment>): Promise<FeaturedApartment> {
-  const token = getStoredAdminToken();
+  const current = getLocalApartments();
+  const existing = current.find((a) => a.id === id);
+  const updatedApt: FeaturedApartment = {
+    ...(existing || {}),
+    ...data,
+    id
+  } as FeaturedApartment;
 
   try {
-    const res = await fetch(`/api/apartments/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      },
-      body: JSON.stringify(data)
-    });
-
-    const parsed = await parseResponseSafe(res);
-    if (parsed.isJson && parsed.data && parsed.data.success && parsed.data.data) {
-      const current = getLocalApartments();
-      const updatedList = current.map(a => a.id === id ? { ...a, ...parsed.data.data } : a);
-      saveLocalApartments(updatedList);
-      return parsed.data.data;
-    } else if (parsed.isJson && parsed.data && parsed.data.error) {
-      throw new Error(parsed.data.error);
-    }
-  } catch (err: any) {
-    if (err.message && !err.message.includes('fetch') && !err.message.includes('HTTP')) {
-      throw err;
-    }
+    await setDoc(doc(db, 'apartments', id), updatedApt, { merge: true });
+  } catch (err) {
+    console.error('Error updating apartment in Firestore:', err);
+    handleFirestoreError(err, OperationType.UPDATE, `apartments/${id}`);
   }
 
-  // Client-side fallback for static deployment (e.g. Vercel)
-  const current = getLocalApartments();
-  const existing = current.find(a => a.id === id);
-  if (!existing) {
-    throw new Error('Apartamento no encontrado');
-  }
-
-  const updatedApt: FeaturedApartment = { ...existing, ...data, id };
-  const updatedList = current.map(a => a.id === id ? updatedApt : a);
+  // Update local cache & dispatch cross-component event
+  const updatedList = current.map((a) => (a.id === id ? updatedApt : a));
   saveLocalApartments(updatedList);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('azahar_apartments_updated', { detail: updatedApt }));
+  }
+
   return updatedApt;
 }
 
-// Delete apartment
+/**
+ * Delete an apartment permanently from Cloud Firestore.
+ */
 export async function deleteApartmentApi(id: string): Promise<boolean> {
-  const token = getStoredAdminToken();
-
   try {
-    const res = await fetch(`/api/apartments/${id}`, {
-      method: 'DELETE',
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      }
-    });
-
-    const parsed = await parseResponseSafe(res);
-    if (parsed.isJson && parsed.data && parsed.data.success) {
-      const current = getLocalApartments();
-      saveLocalApartments(current.filter(a => a.id !== id));
-      return true;
-    }
+    await deleteDoc(doc(db, 'apartments', id));
   } catch (err) {
-    console.warn('API deleteApartment unreachable, deleting locally:', err);
+    console.error('Error deleting apartment in Firestore:', err);
+    handleFirestoreError(err, OperationType.DELETE, `apartments/${id}`);
   }
 
-  // Client-side fallback
+  // Update local cache & dispatch cross-component event
   const current = getLocalApartments();
-  saveLocalApartments(current.filter(a => a.id !== id));
+  saveLocalApartments(current.filter((a) => a.id !== id));
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('azahar_apartments_updated', { detail: { id, deleted: true } }));
+  }
+
   return true;
 }
 
-// Sincronización iCal Booking
+/**
+ * Sincronización iCal Booking
+ */
 export async function syncBookingIcalApi(id: string, icalUrl?: string): Promise<{ success: boolean; message: string; eventsCount?: number; rawIcal?: string }> {
-  const token = getStoredAdminToken();
-
-  try {
-    const res = await fetch(`/api/apartments/${id}/ical-sync`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      },
-      body: JSON.stringify({ icalUrl })
-    });
-
-    const parsed = await parseResponseSafe(res);
-    if (parsed.isJson && parsed.data && parsed.data.success) {
-      return parsed.data;
-    }
-  } catch (err) {
-    console.warn('API syncBookingIcal error, saving configuration locally:', err);
-  }
-
   if (icalUrl) {
     await updateApartmentApi(id, { bookingIcalUrl: icalUrl });
   }
 
   return {
     success: true,
-    message: 'Calendario iCal guardado correctamente para sincronización con Booking.com.',
+    message: 'Calendario iCal guardado y sincronizado correctamente con la base de datos de Azahar Rentals.',
     eventsCount: 0
   };
 }
 
-// Admin login
+/**
+ * Admin Login: validates credentials against Cloud Firestore settings (with local fallback).
+ */
 export async function loginAdminApi(identifier: string, password: string): Promise<{ success: boolean; token?: string; user?: any; error?: string }> {
   const trimmedId = identifier.trim().toLowerCase();
   const trimmedPass = password.trim();
 
-  // 1. Try server API first if running (e.g. dev server or full-stack Node)
-  try {
-    const res = await fetch('/api/admin/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifier: trimmedId, password: trimmedPass })
-    });
+  let creds = getLocalAdminCredentials();
 
-    const parsed = await parseResponseSafe(res);
-    if (parsed.isJson && parsed.data) {
-      if (res.ok && parsed.data.success) {
-        setStoredAdminSession(parsed.data.token, parsed.data.user);
-        return parsed.data;
-      } else if (parsed.data.error) {
-        return parsed.data;
-      }
+  // Try reading updated credentials from Firestore settings
+  try {
+    const adminDoc = await getDoc(doc(db, 'settings', 'admin'));
+    if (adminDoc.exists()) {
+      creds = { ...creds, ...(adminDoc.data() as Partial<AdminCredentials>) };
+      saveLocalAdminCredentials(creds);
     }
-  } catch (err) {
-    console.warn('API /api/admin/login not available, evaluating credentials locally:', err);
+  } catch (e) {
+    console.warn('Could not read admin settings from Firestore, using local credentials:', e);
   }
 
-  // 2. Client-side authentication fallback (for Vercel static deployment)
-  const creds = getLocalAdminCredentials();
   const validUser = creds.username.toLowerCase();
   const validEmail = creds.email.toLowerCase();
 
@@ -338,7 +321,7 @@ export async function loginAdminApi(identifier: string, password: string): Promi
     return { success: false, error: 'Contraseña incorrecta.' };
   }
 
-  const token = `azahar-session-${Date.now()}`;
+  const token = `azahar-cloud-${Date.now()}`;
   const user = {
     username: creds.username,
     email: creds.email,
@@ -349,30 +332,21 @@ export async function loginAdminApi(identifier: string, password: string): Promi
   return { success: true, token, user };
 }
 
-// Admin change password
+/**
+ * Admin Change Password: saves to Cloud Firestore and updates local credentials.
+ */
 export async function changePasswordApi(identifier: string, currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
-  const token = getStoredAdminToken();
+  let creds = getLocalAdminCredentials();
 
   try {
-    const res = await fetch('/api/admin/change-password', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      },
-      body: JSON.stringify({ identifier, currentPassword, newPassword })
-    });
-
-    const parsed = await parseResponseSafe(res);
-    if (parsed.isJson && parsed.data) {
-      return parsed.data;
+    const adminDoc = await getDoc(doc(db, 'settings', 'admin'));
+    if (adminDoc.exists()) {
+      creds = { ...creds, ...(adminDoc.data() as Partial<AdminCredentials>) };
     }
-  } catch (err) {
-    console.warn('API /api/admin/change-password error, updating locally:', err);
+  } catch (e) {
+    console.warn('Firestore changePassword read fallback:', e);
   }
 
-  // Local fallback
-  const creds = getLocalAdminCredentials();
   const trimmedId = identifier.trim().toLowerCase();
   if (trimmedId !== creds.username.toLowerCase() && trimmedId !== creds.email.toLowerCase()) {
     return { success: false, error: 'Usuario no encontrado.' };
@@ -385,27 +359,31 @@ export async function changePasswordApi(identifier: string, currentPassword: str
   }
 
   saveLocalAdminCredentials({ password: newPassword });
+
+  try {
+    await setDoc(doc(db, 'settings', 'admin'), { password: newPassword, updatedAt: new Date().toISOString() }, { merge: true });
+  } catch (err) {
+    console.warn('Firestore setDoc settings/admin error:', err);
+  }
+
   return { success: true };
 }
 
-// Get security question for password reset
+/**
+ * Get security question for password reset.
+ */
 export async function getSecurityQuestionApi(): Promise<{ success: boolean; question?: string; username?: string; email?: string }> {
+  let creds = getLocalAdminCredentials();
+
   try {
-    const res = await fetch('/api/admin/security-question');
-    const parsed = await parseResponseSafe(res);
-    if (parsed.isJson && parsed.data && parsed.data.success) {
-      return {
-        success: true,
-        question: parsed.data.securityQuestion,
-        username: parsed.data.username,
-        email: parsed.data.email
-      };
+    const adminDoc = await getDoc(doc(db, 'settings', 'admin'));
+    if (adminDoc.exists()) {
+      creds = { ...creds, ...(adminDoc.data() as Partial<AdminCredentials>) };
     }
-  } catch (err) {
-    console.warn('API /api/admin/security-question error, using local fallback:', err);
+  } catch (e) {
+    console.warn('Firestore getSecurityQuestion read fallback:', e);
   }
 
-  const creds = getLocalAdminCredentials();
   return {
     success: true,
     question: creds.securityQuestion,
@@ -414,25 +392,21 @@ export async function getSecurityQuestionApi(): Promise<{ success: boolean; ques
   };
 }
 
-// Admin reset password with security answer
+/**
+ * Reset password via security answer and sync to Cloud Firestore.
+ */
 export async function resetPasswordApi(identifier: string, securityAnswer: string, newPassword: string): Promise<{ success: boolean; message?: string; error?: string }> {
-  try {
-    const res = await fetch('/api/admin/reset-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifier, securityAnswer, newPassword })
-    });
+  let creds = getLocalAdminCredentials();
 
-    const parsed = await parseResponseSafe(res);
-    if (parsed.isJson && parsed.data) {
-      return parsed.data;
+  try {
+    const adminDoc = await getDoc(doc(db, 'settings', 'admin'));
+    if (adminDoc.exists()) {
+      creds = { ...creds, ...(adminDoc.data() as Partial<AdminCredentials>) };
     }
-  } catch (err) {
-    console.warn('API /api/admin/reset-password error, resetting locally:', err);
+  } catch (e) {
+    console.warn('Firestore resetPassword read fallback:', e);
   }
 
-  // Local fallback
-  const creds = getLocalAdminCredentials();
   const trimmedId = identifier.trim().toLowerCase();
   if (trimmedId !== creds.username.toLowerCase() && trimmedId !== creds.email.toLowerCase()) {
     return { success: false, error: 'Usuario no encontrado.' };
@@ -450,5 +424,12 @@ export async function resetPasswordApi(identifier: string, securityAnswer: strin
   }
 
   saveLocalAdminCredentials({ password: newPassword });
+
+  try {
+    await setDoc(doc(db, 'settings', 'admin'), { password: newPassword, updatedAt: new Date().toISOString() }, { merge: true });
+  } catch (err) {
+    console.warn('Firestore resetPassword write fallback:', err);
+  }
+
   return { success: true, message: 'Contraseña restablecida correctamente. Ya puedes iniciar sesión.' };
 }

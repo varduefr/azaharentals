@@ -160,7 +160,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic, 
             </div>
             <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Base de Datos Centralizada · Servidor Activo</span>
+              <span>Base de Datos Cloud Firestore · Sincronización en Vivo</span>
             </div>
           </div>
         </div>

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { FeaturedApartment, ApartmentPhoto } from '../../data/featuredApartments';
 import { updateApartmentApi } from '../../services/apartmentService';
+import { compressImageToDataUrl } from '../../utils/imageCompression';
 
 interface AdminPhotoManagerModalProps {
   isOpen: boolean;
@@ -35,31 +36,25 @@ export const AdminPhotoManagerModal: React.FC<AdminPhotoManagerModalProps> = ({
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Handle local image file selections
-  const handleFilesSelected = (files: FileList | null) => {
+  // Handle local image file selections with automatic browser compression
+  const handleFilesSelected = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
     const fileArray = Array.from(files);
-    const readPromises = fileArray.map((file, i) => {
-      return new Promise<ApartmentPhoto>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
-          resolve({
-            url: reader.result as string,
-            caption: cleanName || `Foto ${photos.length + i + 1}`
-          });
-        };
-        reader.readAsDataURL(file);
-      });
+    const readPromises = fileArray.map(async (file, i) => {
+      const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+      const optimizedUrl = await compressImageToDataUrl(file, 1200, 0.82);
+      return {
+        url: optimizedUrl,
+        caption: cleanName || `Foto ${photos.length + i + 1}`
+      };
     });
 
-    Promise.all(readPromises).then((newPhotos) => {
-      setPhotos((prev) => [...prev, ...newPhotos]);
-      setMessage({
-        type: 'success',
-        text: `¡${newPhotos.length} foto(s) añadida(s)! Recuerda hacer clic en "Guardar Fotos" para persistir los cambios.`
-      });
+    const newPhotos = await Promise.all(readPromises);
+    setPhotos((prev) => [...prev, ...newPhotos]);
+    setMessage({
+      type: 'success',
+      text: `¡${newPhotos.length} foto(s) optimizada(s) y añadida(s)! Recuerda hacer clic en "Guardar Fotos" para persistir en la nube.`
     });
   };
 
