@@ -1,15 +1,12 @@
 // Featured Apartments Data for Vacation Rentals
-// Apartment 1: Peñíscola (images in /images/peniscola/)
-// Apartment 2: Benicarló (images in /images/benicarlo/)
-// Apartment 3: Benicarló (images in /images/benicarlo/)
-// Apartment 4: Alcover (images in /images/alcover/)
+// All images are served directly from the public folder /images/
 
-import peniscolaBalconPhoto from '../assets/images/peniscola_balcon_terraza_1788561222890.jpg';
-import peniscolaSalonPhoto from '../assets/images/peniscola_salon_principal_1788444548906.jpg';
-import peniscolaVistasPhoto from '../assets/images/peniscola_coast_1788275771316.jpg';
-import benicarlo1Photo from '../assets/images/benicarlo_marina_apt_1788444573430.jpg';
-import benicarlo2Photo from '../assets/images/benicarlo_morrongo_suite_1788444588447.jpg';
-import alcoverPhoto from '../assets/images/alcover_rural_retreat_1788444605887.jpg';
+const peniscolaBalconPhoto = '/images/peniscola_balcon_terraza_1788561222890.jpg';
+const peniscolaSalonPhoto = '/images/peniscola_salon_principal_1788444548906.jpg';
+const peniscolaVistasPhoto = '/images/peniscola_coast_1788275771316.jpg';
+const benicarlo1Photo = '/images/benicarlo_marina_apt_1788444573430.jpg';
+const benicarlo2Photo = '/images/benicarlo_morrongo_suite_1788444588447.jpg';
+const alcoverPhoto = '/images/alcover_rural_retreat_1788444605887.jpg';
 
 export interface ApartmentPhoto {
   url: string;

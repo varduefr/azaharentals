@@ -43,5 +43,9 @@ service cloud.firestore {
     match /settings/{settingId} {
       allow read, write: if isValidId(settingId);
     }
+
+    match /test/{docId} {
+      allow read: if true;
+    }
   }
 }

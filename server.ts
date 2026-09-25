@@ -294,9 +294,6 @@ async function startServer() {
   app.use('/images', express.static(publicImagesPath, { maxAge: '30d' }));
   // Serve static platforms icons directly
   app.use('/platforms', express.static(publicPlatformsPath, { maxAge: '30d' }));
-  // Backwards compatibility for any legacy /src/assets/images references
-  app.use('/src/assets/images', express.static(publicImagesPath, { maxAge: '30d' }));
-  app.use('/src/assets/images', express.static(srcAssetsImagesPath, { maxAge: '30d' }));
 
   // ==========================================
   // VITE & STATIC SERVING

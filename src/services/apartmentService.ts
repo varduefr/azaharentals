@@ -219,34 +219,38 @@ export async function fetchApartments(): Promise<FeaturedApartment[]> {
  * Triggers callback immediately on data change from anywhere.
  */
 export function subscribeApartments(onUpdate: (apartments: FeaturedApartment[]) => void): Unsubscribe {
-  const colRef = collection(db, 'apartments');
-  return onSnapshot(
-    colRef,
-    async (snapshot) => {
-      if (!snapshot.empty) {
-        const list = await Promise.all(snapshot.docs.map(async (d) => {
-          const raw = d.data() as FeaturedApartment;
-          const initialPhotos = Array.isArray(raw.photos) && raw.photos.length > 0 ? raw.photos : [];
-          const loadedPhotos = await loadApartmentPhotosSubcollection(d.id, initialPhotos);
-          return {
-            ...raw,
-            id: d.id,
-            photos: loadedPhotos.length > 0 ? loadedPhotos : (FEATURED_APARTMENTS.find((a) => a.id === d.id)?.photos || [])
-          };
-        }));
-        saveLocalApartments(list);
-        onUpdate(list);
+  try {
+    const colRef = collection(db, 'apartments');
+    return onSnapshot(
+      colRef,
+      async (snapshot) => {
+        try {
+          if (!snapshot.empty) {
+            const list = await Promise.all(snapshot.docs.map(async (d) => {
+              const raw = d.data() as FeaturedApartment;
+              const initialPhotos = Array.isArray(raw.photos) && raw.photos.length > 0 ? raw.photos : [];
+              const loadedPhotos = await loadApartmentPhotosSubcollection(d.id, initialPhotos);
+              return {
+                ...raw,
+                id: d.id,
+                photos: loadedPhotos.length > 0 ? loadedPhotos : (FEATURED_APARTMENTS.find((a) => a.id === d.id)?.photos || [])
+              };
+            }));
+            saveLocalApartments(list);
+            onUpdate(list);
+          }
+        } catch (err) {
+          console.warn('Error reading apartment snapshot:', err);
+        }
+      },
+      (err) => {
+        console.warn('Firestore onSnapshot listener error (running in preview/offline mode):', err);
       }
-    },
-    (err) => {
-      console.warn('Firestore onSnapshot listener error:', err);
-      try {
-        handleFirestoreError(err, OperationType.GET, 'apartments');
-      } catch {
-        // Suppress
-      }
-    }
-  );
+    );
+  } catch (err) {
+    console.warn('Could not establish onSnapshot subscription:', err);
+    return () => {};
+  }
 }
 
 /**
