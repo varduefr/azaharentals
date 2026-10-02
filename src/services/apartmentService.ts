@@ -54,24 +54,56 @@ function saveLocalAdminCredentials(creds: Partial<AdminCredentials>): void {
   }
 }
 
+const APARTMENT_PRIORITY_ORDER: Record<string, number> = {
+  'apt-peniscola-primero': 1,
+  'apt-benicarlo-marina': 2,
+  'apt-benicarlo-morrongo': 3,
+  'apt-alcover-rural': 99
+};
+
+function getTownPriority(town?: string): number {
+  const normalized = (town || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  if (normalized.includes('peniscola')) return 10;
+  if (normalized.includes('benicarlo')) return 20;
+  if (normalized.includes('alcover')) return 90;
+  return 50;
+}
+
+/**
+ * Sorts apartments so Peñíscola is always first, followed by the two Benicarló apartments, and finally Alcover.
+ */
+export function sortApartments(list: FeaturedApartment[]): FeaturedApartment[] {
+  return [...list].sort((a, b) => {
+    const orderA = APARTMENT_PRIORITY_ORDER[a.id] ?? getTownPriority(a.town);
+    const orderB = APARTMENT_PRIORITY_ORDER[b.id] ?? getTownPriority(b.town);
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+    return (a.name || '').localeCompare(b.name || '', 'es');
+  });
+}
+
 function getLocalApartments(): FeaturedApartment[] {
   try {
     const raw = localStorage.getItem(LOCAL_APARTMENTS_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        return sortApartments(parsed);
       }
     }
   } catch (e) {
     console.warn('Error reading local apartments:', e);
   }
-  return FEATURED_APARTMENTS;
+  return sortApartments(FEATURED_APARTMENTS);
 }
 
 function saveLocalApartments(apartments: FeaturedApartment[]): void {
   try {
-    localStorage.setItem(LOCAL_APARTMENTS_KEY, JSON.stringify(apartments));
+    localStorage.setItem(LOCAL_APARTMENTS_KEY, JSON.stringify(sortApartments(apartments)));
   } catch (e) {
     console.error('Error saving local apartments:', e);
   }
@@ -184,13 +216,15 @@ export async function fetchApartments(): Promise<FeaturedApartment[]> {
         };
       }));
 
-      saveLocalApartments(list);
-      return list;
+      const sortedList = sortApartments(list);
+      saveLocalApartments(sortedList);
+      return sortedList;
     }
 
     // Seed initial portfolio to Cloud Firestore
     console.log('Sembrando catálogo inicial de Azahar Rentals en Cloud Firestore...');
-    for (const apt of FEATURED_APARTMENTS) {
+    const initialSorted = sortApartments(FEATURED_APARTMENTS);
+    for (const apt of initialSorted) {
       const { photos, ...rest } = apt;
       await setDoc(doc(db, 'apartments', apt.id), {
         ...rest,
@@ -201,8 +235,8 @@ export async function fetchApartments(): Promise<FeaturedApartment[]> {
         await saveApartmentPhotosSubcollection(apt.id, photos);
       }
     }
-    saveLocalApartments(FEATURED_APARTMENTS);
-    return FEATURED_APARTMENTS;
+    saveLocalApartments(initialSorted);
+    return initialSorted;
   } catch (err) {
     console.warn('Firestore fetchApartments fallback to local data:', err);
     try {
@@ -236,8 +270,9 @@ export function subscribeApartments(onUpdate: (apartments: FeaturedApartment[]) 
                 photos: loadedPhotos.length > 0 ? loadedPhotos : (FEATURED_APARTMENTS.find((a) => a.id === d.id)?.photos || [])
               };
             }));
-            saveLocalApartments(list);
-            onUpdate(list);
+            const sortedList = sortApartments(list);
+            saveLocalApartments(sortedList);
+            onUpdate(sortedList);
           }
         } catch (err) {
           console.warn('Error reading apartment snapshot:', err);

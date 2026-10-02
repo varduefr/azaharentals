@@ -44,7 +44,7 @@ import {
   Maximize2
 } from 'lucide-react';
 import { FEATURED_APARTMENTS, FeaturedApartment, ApartmentPhoto } from '../data/featuredApartments';
-import { fetchApartments, subscribeApartments } from '../services/apartmentService';
+import { fetchApartments, subscribeApartments, sortApartments } from '../services/apartmentService';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import { sendEmailNotification } from '../services/emailService';
@@ -123,7 +123,7 @@ export const FeaturedApartmentsSection: React.FC = () => {
 
   // Apartment list in state, initialized from data and refreshed from central backend DB
   const [apartments, setApartments] = useState<FeaturedApartment[]>(() =>
-    FEATURED_APARTMENTS.map((apt) => ({
+    sortApartments(FEATURED_APARTMENTS).map((apt) => ({
       ...apt,
       photos: (apt.photos || []).map((p) => ({
         ...p,
@@ -135,7 +135,7 @@ export const FeaturedApartmentsSection: React.FC = () => {
   useEffect(() => {
     const handleListUpdate = (list: FeaturedApartment[]) => {
       if (list && list.length > 0) {
-        const sanitized = list.map((apt) => ({
+        const sanitized = sortApartments(list).map((apt) => ({
           ...apt,
           photos: (apt.photos || []).map((p) => ({
             ...p,
