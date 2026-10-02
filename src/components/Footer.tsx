@@ -145,11 +145,11 @@ export const Footer: React.FC<FooterProps> = ({ onOpenLicenseModal, onOpenSimula
             </h4>
             <div className="space-y-2.5">
               <a 
-                href="tel:+34964892010" 
+                href="tel:+34637968999" 
                 className="flex items-center gap-2 text-slate-300 hover:text-cyan-400 transition-colors"
               >
                 <Phone className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                <span className="font-semibold">+34 964 89 20 10</span>
+                <span className="font-semibold">+34 637 96 89 99</span>
               </a>
 
               <a 

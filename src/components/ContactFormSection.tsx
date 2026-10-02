@@ -122,8 +122,8 @@ export const ContactFormSection: React.FC<ContactFormSectionProps> = ({
             {/* Direct Contact Cards */}
             <div className="space-y-3 pt-2">
               <a 
-                href="tel:+34964892010" 
-                aria-label="Llamar al teléfono de atención a propietarios de Castellón +34 964 89 20 10"
+                href="tel:+34637968999" 
+                aria-label="Llamar al teléfono de atención a propietarios de Castellón +34 637 96 89 99"
                 className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 hover:border-blue-500 hover:bg-blue-50/40 transition-all flex items-center gap-4 group cursor-pointer block"
               >
                 <div className="p-3 bg-blue-100 text-blue-700 rounded-xl group-hover:scale-110 transition-transform">
@@ -131,7 +131,7 @@ export const ContactFormSection: React.FC<ContactFormSectionProps> = ({
                 </div>
                 <div>
                   <span className="text-xs text-slate-500 font-medium block">Llámanos directamente</span>
-                  <span className="text-base font-bold text-slate-900">+34 964 89 20 10</span>
+                  <span className="text-base font-bold text-slate-900">+34 637 96 89 99</span>
                 </div>
               </a>
 
