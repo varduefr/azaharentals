@@ -1,13 +1,12 @@
 import React, { useEffect } from 'react';
 import { 
-  ArrowLeft, 
+  Home, 
   Calculator, 
   ShieldCheck, 
   TrendingUp, 
   MapPin, 
   Award, 
   CheckCircle2, 
-  ChevronRight,
   BarChart3
 } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
@@ -75,36 +74,30 @@ export const SimulatorPage: React.FC<SimulatorPageProps> = ({
         onOpenContact={() => onOpenContact()}
       />
 
-      {/* Contextual Sub-Bar / Breadcrumbs */}
-      <div className="bg-slate-950/80 border-b border-slate-800 py-2.5 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 text-xs">
-          <button
-            type="button"
-            onClick={() => onNavigateHome()}
-            className="inline-flex items-center gap-1.5 text-slate-400 hover:text-cyan-400 font-medium transition-colors cursor-pointer group"
-          >
-            <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-            <span>Volver a la página principal</span>
-          </button>
-
-          <nav aria-label="Migas de pan" className="flex items-center gap-1.5 text-slate-400">
-            <button
+      {/* Navigation Breadcrumb Bar */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <nav className="flex items-center gap-2 text-xs text-slate-500" aria-label="Breadcrumb">
+            <button 
               type="button"
               onClick={() => onNavigateHome()}
-              className="hover:text-cyan-400 transition-colors cursor-pointer"
+              className="hover:text-blue-600 transition-colors flex items-center gap-1 cursor-pointer font-medium"
             >
-              Inicio
+              <Home className="w-3.5 h-3.5" />
+              <span>Inicio</span>
             </button>
-            <ChevronRight className="w-3 h-3 text-slate-600" />
-            <button
+            <span aria-hidden="true">/</span>
+            <button 
               type="button"
               onClick={() => onNavigateHome('destinos')}
-              className="hover:text-cyan-400 transition-colors cursor-pointer"
+              className="hover:text-blue-600 transition-colors cursor-pointer"
             >
               Destinos Castellón
             </button>
-            <ChevronRight className="w-3 h-3 text-slate-600" />
-            <span className="text-cyan-300 font-semibold">Simulador de Rentabilidad</span>
+            <span aria-hidden="true">/</span>
+            <span className="text-slate-900 font-semibold" aria-current="page">
+              Simulador de Rentabilidad
+            </span>
           </nav>
         </div>
       </div>

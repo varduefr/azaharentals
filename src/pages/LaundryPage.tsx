@@ -206,7 +206,7 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
               </button>
               <span aria-hidden="true">/</span>
               <span className="text-slate-900 font-semibold" aria-current="page">
-                Lavandería Industrial B2B (/laundry)
+                Lavanderia Industrial B2B
               </span>
             </nav>
           </div>

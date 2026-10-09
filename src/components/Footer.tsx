@@ -127,7 +127,7 @@ export const Footer: React.FC<FooterProps> = ({
                   }}
                   className="hover:text-cyan-400 transition-colors cursor-pointer text-cyan-300 font-medium"
                 >
-                  Lavandería Industrial B2B (/laundry)
+                  Lavanderia Industrial B2B
                 </a>
               </li>
               <li>

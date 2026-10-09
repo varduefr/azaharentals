@@ -107,7 +107,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const navLinks: { label: string; href: string; badge?: string }[] = [
     { label: 'Apartamentos', href: '#apartamentos' },
     { label: 'Servicios 360°', href: '#servicios' },
-    { label: 'Lavandería B2B', href: '/laundry' },
+    { label: 'Lavanderia Industrial', href: '/laundry' },
     { label: 'Licencia Turística', href: '#licencia-turistica' },
     { label: 'Destinos Castellón', href: '#destinos' },
     { label: 'Simulador', href: '/simulador' },
