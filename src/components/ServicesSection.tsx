@@ -19,6 +19,7 @@ interface ServicesSectionProps {
   onOpenLicenseModal: () => void;
   onOpenContact: () => void;
   onOpenSimulator?: () => void;
+  onNavigateToLaundry?: () => void;
 }
 
 const ICON_MAP: Record<string, React.ReactNode> = {
@@ -34,7 +35,8 @@ const ICON_MAP: Record<string, React.ReactNode> = {
 export const ServicesSection: React.FC<ServicesSectionProps> = ({ 
   onOpenLicenseModal, 
   onOpenContact,
-  onOpenSimulator 
+  onOpenSimulator,
+  onNavigateToLaundry
 }) => {
   const [selectedServiceId, setSelectedServiceId] = useState<string>('licencia-turistica');
 
@@ -170,6 +172,21 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
                   </div>
                 </div>
 
+                {/* Special callout when cleaning-laundry is selected */}
+                {activeService.id === 'cleaning-laundry' && (
+                  <div className="p-4 rounded-2xl bg-blue-50/90 border border-blue-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-xs font-bold text-blue-900">
+                        <Sparkles className="w-4 h-4 text-blue-600 shrink-0" />
+                        <span>Lavandería Industrial B2B para Hoteles, Pisos Turísticos, Gimnasios y Clínicas</span>
+                      </div>
+                      <p className="text-xs text-blue-800/90 leading-snug">
+                        Tratamiento especializado de sábanas, toallas, batas sanitarias e uniformes con lavado, secado y planchado calandra industrial.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Action button inside service card */}
                 <div className="pt-6 flex flex-col sm:flex-row items-center gap-3">
                   {activeService.id === 'licencia-turistica' ? (
@@ -182,6 +199,34 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
                       <FileCheck className="w-4 h-4" />
                       <span>Tramitar mi Licencia Turística Gratis</span>
                     </a>
+                  ) : activeService.id === 'cleaning-laundry' ? (
+                    <>
+                      {/* Botón de Más Información solicitado que abre /laundry */}
+                      <a
+                        href="/laundry"
+                        id="btn-service-laundry-more-info"
+                        onClick={(e) => {
+                          if (onNavigateToLaundry) {
+                            e.preventDefault();
+                            onNavigateToLaundry();
+                          }
+                        }}
+                        aria-label="Más Información sobre lavandería industrial para hoteles, pisos turísticos, gimnasios y clínicas"
+                        className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer hover:translate-y-[-1px]"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        <span>Más Información</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </a>
+
+                      <button
+                        onClick={onOpenContact}
+                        id="btn-service-request-info"
+                        className="w-full sm:w-auto px-5 py-3 border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer hover:translate-y-[-1px]"
+                      >
+                        <span>Solicitar Propuesta para mi Vivienda</span>
+                      </button>
+                    </>
                   ) : (
                     <button
                       onClick={onOpenContact}

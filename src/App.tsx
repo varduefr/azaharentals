@@ -14,10 +14,11 @@ import { Footer } from './components/Footer';
 import { FloatingActions } from './components/FloatingActions';
 import { LicenseEligibilityModal } from './components/LicenseEligibilityModal';
 import { SimulatorPage } from './pages/SimulatorPage';
+import { LaundryPage } from './pages/LaundryPage';
 import { AdminView } from './components/admin/AdminView';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'home' | 'simulator' | 'admin'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'simulator' | 'admin' | 'laundry'>('home');
   const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
   const [selectedTown, setSelectedTown] = useState('peniscola');
   const [selectedBedrooms, setSelectedBedrooms] = useState(2);
@@ -44,6 +45,13 @@ export default function App() {
         hash === '#simulador' ||
         searchParams.get('page') === 'simulador';
 
+      const isLaundry =
+        pathname === '/laundry' ||
+        pathname.startsWith('/laundry') ||
+        hash === '#/laundry' ||
+        hash === '#laundry' ||
+        searchParams.get('page') === 'laundry';
+
       if (isAdmin) {
         setCurrentPage('admin');
       } else if (isSim) {
@@ -52,6 +60,8 @@ export default function App() {
         const hab = searchParams.get('hab') || searchParams.get('bedrooms');
         if (muni) setSelectedTown(muni);
         if (hab) setSelectedBedrooms(Number(hab) || 2);
+      } else if (isLaundry) {
+        setCurrentPage('laundry');
       } else {
         setCurrentPage('home');
       }
@@ -73,6 +83,16 @@ export default function App() {
       window.history.pushState({ page: 'admin' }, '', '/admin');
     } catch {
       window.location.hash = '#/admin';
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const navigateToLaundry = () => {
+    setCurrentPage('laundry');
+    try {
+      window.history.pushState({ page: 'laundry' }, '', '/laundry');
+    } catch {
+      window.location.hash = '#/laundry';
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -155,8 +175,17 @@ export default function App() {
           onOpenLicenseModal={() => setIsLicenseModalOpen(true)}
           onOpenContact={handleOpenContact}
         />
+      ) : currentPage === 'laundry' ? (
+        /* 3. Dedicated Industrial Laundry Page (/laundry) */
+        <LaundryPage
+          onNavigateHome={navigateToHome}
+          onNavigateToSimulator={() => navigateToSimulator()}
+          onNavigateToAdmin={navigateToAdmin}
+          onOpenLicenseModal={() => setIsLicenseModalOpen(true)}
+          onOpenContact={handleOpenContact}
+        />
       ) : (
-        /* 3. Main Home Page */
+        /* 4. Main Home Page */
         <>
           {/* Sticky Header / Navbar */}
           <Navbar
@@ -164,6 +193,7 @@ export default function App() {
             onOpenLicenseModal={() => setIsLicenseModalOpen(true)}
             onOpenCalculator={() => navigateToSimulator()}
             onNavigateToSimulator={() => navigateToSimulator()}
+            onNavigateToLaundry={navigateToLaundry}
             onNavigateToHome={navigateToHome}
             onNavigateToAdmin={navigateToAdmin}
             onOpenContact={() => handleOpenContact()}
@@ -196,6 +226,7 @@ export default function App() {
               onOpenLicenseModal={() => setIsLicenseModalOpen(true)}
               onOpenContact={() => handleOpenContact()}
               onOpenSimulator={() => navigateToSimulator()}
+              onNavigateToLaundry={navigateToLaundry}
             />
 
             {/* 5. Costa de Castellón Locations & Beaches Showcase (Vinaròs, Benicarló, Peñíscola, Oropesa, etc.) */}
@@ -233,6 +264,7 @@ export default function App() {
           <Footer
             onOpenLicenseModal={() => setIsLicenseModalOpen(true)}
             onOpenSimulator={() => navigateToSimulator()}
+            onNavigateToLaundry={navigateToLaundry}
           />
         </>
       )}

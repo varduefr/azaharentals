@@ -19,9 +19,10 @@ interface NavbarProps {
   onOpenCalculator: () => void;
   onOpenContact: () => void;
   onNavigateToSimulator?: () => void;
+  onNavigateToLaundry?: () => void;
   onNavigateToHome?: (sectionId?: string) => void;
   onNavigateToAdmin?: () => void;
-  currentPage?: 'home' | 'simulator' | 'admin';
+  currentPage?: 'home' | 'simulator' | 'admin' | 'laundry';
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ 
@@ -29,6 +30,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCalculator, 
   onOpenContact,
   onNavigateToSimulator,
+  onNavigateToLaundry,
   onNavigateToHome,
   onNavigateToAdmin,
   currentPage = 'home'
@@ -52,7 +54,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const handleGoToLicenseSection = (e?: React.MouseEvent) => {
     if (e) e.preventDefault();
-    if (currentPage === 'simulator') {
+    if (currentPage === 'simulator' || currentPage === 'laundry') {
       if (onNavigateToHome) {
         onNavigateToHome('licencia-turistica');
       }
@@ -67,6 +69,18 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   const handleLinkClick = (href: string, e: React.MouseEvent) => {
+    if (href === '/laundry') {
+      e.preventDefault();
+      if (currentPage === 'laundry') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      if (onNavigateToLaundry) {
+        onNavigateToLaundry();
+      }
+      return;
+    }
+
     if (href === '#calculadora' || href === '/simulador') {
       e.preventDefault();
       if (currentPage === 'simulator') {
@@ -81,7 +95,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       return;
     }
 
-    if (currentPage === 'simulator') {
+    if (currentPage === 'simulator' || currentPage === 'laundry') {
       e.preventDefault();
       const sectionId = href.replace('#', '');
       if (onNavigateToHome) {
@@ -93,6 +107,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const navLinks: { label: string; href: string; badge?: string }[] = [
     { label: 'Apartamentos', href: '#apartamentos' },
     { label: 'Servicios 360°', href: '#servicios' },
+    { label: 'Lavandería B2B', href: '/laundry' },
     { label: 'Licencia Turística', href: '#licencia-turistica' },
     { label: 'Destinos Castellón', href: '#destinos' },
     { label: 'Simulador', href: '/simulador' },

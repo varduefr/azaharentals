@@ -12,9 +12,14 @@ import {
 interface FooterProps {
   onOpenLicenseModal: () => void;
   onOpenSimulator?: () => void;
+  onNavigateToLaundry?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onOpenLicenseModal, onOpenSimulator }) => {
+export const Footer: React.FC<FooterProps> = ({ 
+  onOpenLicenseModal, 
+  onOpenSimulator,
+  onNavigateToLaundry 
+}) => {
   return (
     <footer className="bg-slate-950 text-slate-400 text-xs border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -109,6 +114,20 @@ export const Footer: React.FC<FooterProps> = ({ onOpenLicenseModal, onOpenSimula
               <li>
                 <a href="#servicios" className="hover:text-cyan-400 transition-colors">
                   Check-in 24/7 y Cerraduras Digitales
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="/laundry" 
+                  onClick={(e) => {
+                    if (onNavigateToLaundry) {
+                      e.preventDefault();
+                      onNavigateToLaundry();
+                    }
+                  }}
+                  className="hover:text-cyan-400 transition-colors cursor-pointer text-cyan-300 font-medium"
+                >
+                  Lavandería Industrial B2B (/laundry)
                 </a>
               </li>
               <li>

@@ -60,14 +60,16 @@ export const SERVICES_DATA: ServiceItem[] = [
     id: 'cleaning-laundry',
     iconName: 'Sparkles',
     title: 'Limpieza Hotelera, Lavandería Industrial & Amenities',
-    shortDescription: 'Protocolos de desinfección profesional tras cada salida, lencería de cama y toallas de alta calidad y reposición de kit de bienvenida ecológico.',
-    fullDescription: 'La limpieza es el factor número 1 en las valoraciones de 5 estrellas. Contamos con equipos propios formados en estándares hoteleros que inspeccionan cada rincón antes de la entrada del siguiente viajero.',
+    shortDescription: 'Lavandería industrial especializada para hoteles, pisos turísticos, gimnasios y clínicas: sábanas, toallas, batas y uniformes con lavado, secado y planchado.',
+    fullDescription: 'Disponemos de servicio integral de lavandería industrial para hoteles, pisos turísticos, gimnasios y clínicas privadas. Ofrecemos el tratamiento higiénico de sábanas, toallas, batas sanitarias e uniformes laborales con ciclo completo de lavado desinfectante, secado y planchado industrial calandra.',
     bulletPoints: [
-      'Lavandería industrial con tratamiento térmico desinfectante de sábanas y toallas',
+      'Lavandería industrial para hoteles, pisos turísticos, gimnasios y clínicas privadas',
+      'Limpieza y tratamiento térmico de sábanas, toallas, batas de clínica e uniformes',
+      'Servicio completo de lavado desinfectante, secado y planchado calandra industrial',
       'Inspección de control de calidad previa a cada check-in con checklist fotográfico',
-      'Reposición de amenities sostenibles de baño y cocina de primera marca',
-      'Limpiezas a fondo estacionales y puestas a punto de inicio de temporada'
-    ]
+      'Embalaje higiénico termosellado y reposición de amenities ecológicos de primera marca'
+    ],
+    badge: 'Lavandería B2B /laundry'
   },
   {
     id: 'maintenance-protection',
