@@ -171,6 +171,7 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
           if (onNavigateToSimulator) onNavigateToSimulator();
         }}
         onNavigateToSimulator={onNavigateToSimulator}
+        onNavigateToLaundry={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         onNavigateToHome={onNavigateHome}
         onNavigateToAdmin={onNavigateToAdmin}
         onOpenContact={() => {
@@ -1038,6 +1039,7 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
       <Footer
         onOpenLicenseModal={onOpenLicenseModal}
         onOpenSimulator={onNavigateToSimulator}
+        onNavigateToLaundry={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
       />
 
     </div>

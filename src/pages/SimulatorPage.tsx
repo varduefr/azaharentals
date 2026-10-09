@@ -22,6 +22,7 @@ interface SimulatorPageProps {
   onOpenLicenseModal: () => void;
   onOpenContact: (data?: any) => void;
   onNavigateToAdmin?: () => void;
+  onNavigateToLaundry?: () => void;
 }
 
 export const SimulatorPage: React.FC<SimulatorPageProps> = ({
@@ -30,7 +31,8 @@ export const SimulatorPage: React.FC<SimulatorPageProps> = ({
   onNavigateHome,
   onOpenLicenseModal,
   onOpenContact,
-  onNavigateToAdmin
+  onNavigateToAdmin,
+  onNavigateToLaundry
 }) => {
   const { currentTheme } = useTheme();
 
@@ -69,6 +71,7 @@ export const SimulatorPage: React.FC<SimulatorPageProps> = ({
         onOpenLicenseModal={onOpenLicenseModal}
         onOpenCalculator={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         onNavigateToSimulator={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        onNavigateToLaundry={onNavigateToLaundry}
         onNavigateToHome={onNavigateHome}
         onNavigateToAdmin={onNavigateToAdmin}
         onOpenContact={() => onOpenContact()}
@@ -307,7 +310,11 @@ export const SimulatorPage: React.FC<SimulatorPageProps> = ({
       </main>
 
       {/* Footer */}
-      <Footer onOpenLicenseModal={onOpenLicenseModal} />
+      <Footer 
+        onOpenLicenseModal={onOpenLicenseModal} 
+        onOpenSimulator={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        onNavigateToLaundry={onNavigateToLaundry}
+      />
 
     </div>
   );

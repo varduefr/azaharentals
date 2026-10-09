@@ -77,6 +77,13 @@ export const Navbar: React.FC<NavbarProps> = ({
       }
       if (onNavigateToLaundry) {
         onNavigateToLaundry();
+      } else {
+        try {
+          window.history.pushState({ page: 'laundry' }, '', '/laundry');
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        } catch {
+          window.location.href = '/laundry';
+        }
       }
       return;
     }
@@ -89,8 +96,15 @@ export const Navbar: React.FC<NavbarProps> = ({
       }
       if (onNavigateToSimulator) {
         onNavigateToSimulator();
-      } else {
+      } else if (onOpenCalculator) {
         onOpenCalculator();
+      } else {
+        try {
+          window.history.pushState({ page: 'simulator' }, '', '/simulador');
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        } catch {
+          window.location.href = '/simulador';
+        }
       }
       return;
     }

@@ -172,6 +172,7 @@ export default function App() {
           initialBedrooms={selectedBedrooms}
           onNavigateHome={navigateToHome}
           onNavigateToAdmin={navigateToAdmin}
+          onNavigateToLaundry={navigateToLaundry}
           onOpenLicenseModal={() => setIsLicenseModalOpen(true)}
           onOpenContact={handleOpenContact}
         />
