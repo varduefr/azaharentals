@@ -13,12 +13,14 @@ interface FooterProps {
   onOpenLicenseModal: () => void;
   onOpenSimulator?: () => void;
   onNavigateToLaundry?: () => void;
+  onNavigateToApartments?: (apartmentId?: string) => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({ 
   onOpenLicenseModal, 
   onOpenSimulator,
-  onNavigateToLaundry 
+  onNavigateToLaundry,
+  onNavigateToApartments
 }) => {
   return (
     <footer className="bg-slate-950 text-slate-400 text-xs border-t border-slate-800">
@@ -114,6 +116,20 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <a href="#servicios" className="hover:text-cyan-400 transition-colors">
                   Check-in 24/7 y Cerraduras Digitales
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="/apartamentos-turisticos-castellon" 
+                  onClick={(e) => {
+                    if (onNavigateToApartments) {
+                      e.preventDefault();
+                      onNavigateToApartments();
+                    }
+                  }}
+                  className="hover:text-cyan-400 transition-colors cursor-pointer text-cyan-300 font-medium"
+                >
+                  Apartamentos Turísticos Castellón
                 </a>
               </li>
               <li>

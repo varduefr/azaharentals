@@ -32,6 +32,7 @@ interface LaundryPageProps {
   onNavigateHome: (sectionId?: string) => void;
   onNavigateToSimulator?: () => void;
   onNavigateToAdmin?: () => void;
+  onNavigateToApartments?: (apartmentId?: string) => void;
   onOpenLicenseModal?: () => void;
   onOpenContact?: (data?: any) => void;
 }
@@ -40,6 +41,7 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
   onNavigateHome,
   onNavigateToSimulator,
   onNavigateToAdmin,
+  onNavigateToApartments,
   onOpenLicenseModal = () => {},
   onOpenContact = () => {}
 }) => {
@@ -172,6 +174,7 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
         }}
         onNavigateToSimulator={onNavigateToSimulator}
         onNavigateToLaundry={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        onNavigateToApartments={onNavigateToApartments}
         onNavigateToHome={onNavigateHome}
         onNavigateToAdmin={onNavigateToAdmin}
         onOpenContact={() => {
@@ -1040,6 +1043,7 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
         onOpenLicenseModal={onOpenLicenseModal}
         onOpenSimulator={onNavigateToSimulator}
         onNavigateToLaundry={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        onNavigateToApartments={onNavigateToApartments}
       />
 
     </div>

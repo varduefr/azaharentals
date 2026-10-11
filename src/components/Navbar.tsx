@@ -20,9 +20,10 @@ interface NavbarProps {
   onOpenContact: () => void;
   onNavigateToSimulator?: () => void;
   onNavigateToLaundry?: () => void;
+  onNavigateToApartments?: (apartmentId?: string) => void;
   onNavigateToHome?: (sectionId?: string) => void;
   onNavigateToAdmin?: () => void;
-  currentPage?: 'home' | 'simulator' | 'admin' | 'laundry';
+  currentPage?: 'home' | 'simulator' | 'admin' | 'laundry' | 'apartments';
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ 
@@ -31,6 +32,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenContact,
   onNavigateToSimulator,
   onNavigateToLaundry,
+  onNavigateToApartments,
   onNavigateToHome,
   onNavigateToAdmin,
   currentPage = 'home'
@@ -54,7 +56,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const handleGoToLicenseSection = (e?: React.MouseEvent) => {
     if (e) e.preventDefault();
-    if (currentPage === 'simulator' || currentPage === 'laundry') {
+    if (currentPage === 'simulator' || currentPage === 'laundry' || currentPage === 'apartments') {
       if (onNavigateToHome) {
         onNavigateToHome('licencia-turistica');
       }
@@ -109,7 +111,26 @@ export const Navbar: React.FC<NavbarProps> = ({
       return;
     }
 
-    if (currentPage === 'simulator' || currentPage === 'laundry') {
+    if (href === '/apartamentos-turisticos-castellon' || href === '#apartamentos') {
+      e.preventDefault();
+      if (currentPage === 'apartments') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      if (onNavigateToApartments) {
+        onNavigateToApartments();
+      } else {
+        try {
+          window.history.pushState({ page: 'apartments' }, '', '/apartamentos-turisticos-castellon');
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        } catch {
+          window.location.href = '/apartamentos-turisticos-castellon';
+        }
+      }
+      return;
+    }
+
+    if (currentPage === 'simulator' || currentPage === 'laundry' || currentPage === 'apartments') {
       e.preventDefault();
       const sectionId = href.replace('#', '');
       if (onNavigateToHome) {
@@ -119,7 +140,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   const navLinks: { label: string; href: string; badge?: string }[] = [
-    { label: 'Apartamentos', href: '#apartamentos' },
+    { label: 'Apartamentos', href: '/apartamentos-turisticos-castellon' },
     { label: 'Servicios 360°', href: '#servicios' },
     { label: 'Lavanderia Industrial', href: '/laundry' },
     { label: 'Licencia Turística', href: '#licencia-turistica' },

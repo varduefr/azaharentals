@@ -120,7 +120,13 @@ const getApartmentDisplayPhotos = (apt: FeaturedApartment): ApartmentPhoto[] => 
   return result;
 };
 
-export const FeaturedApartmentsSection: React.FC = () => {
+export interface FeaturedApartmentsSectionProps {
+  onBookingClick?: (apt: FeaturedApartment) => void;
+}
+
+export const FeaturedApartmentsSection: React.FC<FeaturedApartmentsSectionProps> = ({
+  onBookingClick
+}) => {
   const { currentTheme } = useTheme();
   const { showSuccess } = useToast();
 
@@ -922,7 +928,13 @@ export const FeaturedApartmentsSection: React.FC = () => {
                     {/* Action Button: Reservar fechas */}
                     <button
                       id={`btn-book-${apt.id}`}
-                      onClick={() => handleOpenBooking(apt)}
+                      onClick={() => {
+                        if (onBookingClick) {
+                          onBookingClick(apt);
+                        } else {
+                          handleOpenBooking(apt);
+                        }
+                      }}
                       aria-label={`Reservar estancia en el apartamento turístico ${apt.name} en ${apt.town}`}
                       className={`w-full py-2.5 px-4 text-xs font-bold text-white rounded-xl shadow-lg cursor-pointer flex items-center justify-center gap-2 transition-all duration-200 hover:brightness-110 active:scale-[0.98]`}
                       style={{ backgroundColor: currentTheme.colors.primary }}
