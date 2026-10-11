@@ -21,7 +21,9 @@ import {
   AlertCircle,
   MapPin,
   RefreshCw,
-  Eye
+  Eye,
+  DollarSign,
+  Sliders
 } from 'lucide-react';
 import { FeaturedApartment } from '../../data/featuredApartments';
 import { 
@@ -34,6 +36,7 @@ import { AdminApartmentEditorModal } from './AdminApartmentEditorModal';
 import { AdminPhotoManagerModal } from './AdminPhotoManagerModal';
 import { AdminAmenitiesModal } from './AdminAmenitiesModal';
 import { AdminIcalModal } from './AdminIcalModal';
+import { AdminRatesModal } from './AdminRatesModal';
 import { AdminChangePasswordModal } from './AdminChangePasswordModal';
 
 interface AdminDashboardProps {
@@ -59,6 +62,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic, 
 
   const [isIcalOpen, setIsIcalOpen] = useState(false);
   const [apartmentForIcal, setApartmentForIcal] = useState<FeaturedApartment | null>(null);
+
+  const [isRatesOpen, setIsRatesOpen] = useState(false);
+  const [apartmentForRates, setApartmentForRates] = useState<FeaturedApartment | null>(null);
 
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
@@ -506,6 +512,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic, 
                             {hasIcal ? 'Ajustar iCal' : 'Conectar'}
                           </button>
                         </div>
+
+                        {/* Booking Season Rates Status Box */}
+                        <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2">
+                            <DollarSign className="w-4 h-4 text-cyan-400" />
+                            <div>
+                              <span className="text-[11px] text-slate-400 block">Tarifas y Precios Booking:</span>
+                              <span className="text-xs font-semibold text-cyan-300 font-mono">
+                                {apt.rates ? `${apt.rates.lowSeason}€ - ${apt.rates.peakSeasonAugust}€/noche` : `Desde ${apt.basePricePerNight}€/noche`}
+                              </span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setApartmentForRates(apt);
+                              setIsRatesOpen(true);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 text-[11px] font-semibold cursor-pointer border border-cyan-700/60 transition-colors"
+                          >
+                            Gestionar Tarifas
+                          </button>
+                        </div>
                       </div>
 
                       {/* Card Bottom Management Toolbar */}
@@ -525,6 +554,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic, 
                         </button>
 
                         <div className="flex items-center gap-1.5">
+                          {/* Configure rates button */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setApartmentForRates(apt);
+                              setIsRatesOpen(true);
+                            }}
+                            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"
+                            title="Configurar tarifas por temporada"
+                          >
+                            <Sliders className="w-4 h-4" />
+                          </button>
+
                           {/* Edit data */}
                           <button
                             type="button"
@@ -604,6 +646,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic, 
             setApartmentForIcal(null);
           }}
           onIcalSaved={handleApartmentSaved}
+        />
+      )}
+
+      {isRatesOpen && (
+        <AdminRatesModal
+          isOpen={isRatesOpen}
+          apartment={apartmentForRates}
+          onClose={() => {
+            setIsRatesOpen(false);
+            setApartmentForRates(null);
+          }}
+          onRatesSaved={handleApartmentSaved}
         />
       )}
 

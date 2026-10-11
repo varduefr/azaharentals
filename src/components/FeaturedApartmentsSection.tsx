@@ -44,7 +44,7 @@ import {
   Maximize2
 } from 'lucide-react';
 import { FEATURED_APARTMENTS, FeaturedApartment, ApartmentPhoto } from '../data/featuredApartments';
-import { fetchApartments, subscribeApartments, sortApartments } from '../services/apartmentService';
+import { fetchApartments, subscribeApartments, sortApartments, updateApartmentApi } from '../services/apartmentService';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import { sendEmailNotification } from '../services/emailService';
@@ -62,6 +62,8 @@ import {
   BookingSeasonRateConfig,
   DEFAULT_BOOKING_RATES,
   getStoredBookingRates,
+  getApartmentBookingRates,
+  getDefaultRatesForApartment,
   saveStoredBookingRates,
   calculateBookingStayRate
 } from '../utils/bookingRates';
@@ -187,7 +189,8 @@ export const FeaturedApartmentsSection: React.FC = () => {
   const [isConsultingBooking, setIsConsultingBooking] = useState<boolean>(false);
   const [showBlockedDatesList, setShowBlockedDatesList] = useState<boolean>(false);
 
-  // Booking dynamic rates state for Peñíscola apartment (synced with Booking calendar)
+  // Booking dynamic rates state (per apartment)
+  const [activeRateApartmentId, setActiveRateApartmentId] = useState<string>('apt-peniscola-primero');
   const [bookingRates, setBookingRates] = useState<BookingSeasonRateConfig>(() =>
     getStoredBookingRates('apt-peniscola-primero')
   );
@@ -210,18 +213,37 @@ export const FeaturedApartmentsSection: React.FC = () => {
 
   const handleSaveRates = (newRates?: BookingSeasonRateConfig) => {
     const toSave = newRates || rateInputDraft;
-    saveStoredBookingRates('apt-peniscola-primero', toSave);
+    const targetAptId = activeRateApartmentId;
+    saveStoredBookingRates(targetAptId, toSave);
     setBookingRates(toSave);
     setRateInputDraft(toSave);
-    setRateSuccessAlert('✓ Tarifas de Booking.com guardadas con éxito. Se calculan en tiempo real según las fechas del calendario.');
+    
+    // Update local apartments list state
+    setApartments((prev) =>
+      prev.map((a) => (a.id === targetAptId ? { ...a, rates: toSave } : a))
+    );
+    
+    // Persist in Firestore
+    updateApartmentApi(targetAptId, { rates: toSave }).catch((err) => {
+      console.warn('Error sincronizando tarifas en Firestore:', err);
+    });
+
+    setRateSuccessAlert('✓ Tarifas de Booking.com guardadas y publicadas con éxito.');
     setTimeout(() => setRateSuccessAlert(''), 6000);
   };
 
   const handleResetDefaultRates = () => {
-    saveStoredBookingRates('apt-peniscola-primero', DEFAULT_BOOKING_RATES);
-    setBookingRates(DEFAULT_BOOKING_RATES);
-    setRateInputDraft(DEFAULT_BOOKING_RATES);
-    setRateSuccessAlert('Tarifas restablecidas a los valores de mercado recomendados de Peñíscola.');
+    const targetAptId = activeRateApartmentId;
+    const activeApt = apartments.find((a) => a.id === targetAptId);
+    const defaults = getDefaultRatesForApartment(activeApt?.basePricePerNight || 70);
+    saveStoredBookingRates(targetAptId, defaults);
+    setBookingRates(defaults);
+    setRateInputDraft(defaults);
+    setApartments((prev) =>
+      prev.map((a) => (a.id === targetAptId ? { ...a, rates: defaults } : a))
+    );
+    updateApartmentApi(targetAptId, { rates: defaults }).catch(() => {});
+    setRateSuccessAlert('Tarifas restablecidas a los valores recomendados según el precio base.');
     setTimeout(() => setRateSuccessAlert(''), 6000);
   };
 
@@ -252,6 +274,19 @@ export const FeaturedApartmentsSection: React.FC = () => {
     setRateInputDraft(updated);
     handleSaveRates(updated);
   };
+
+  // Listen for global rates updates
+  useEffect(() => {
+    const onRatesUpdated = (e: any) => {
+      const detail = e.detail;
+      if (detail && detail.aptId === activeRateApartmentId) {
+        setBookingRates(detail.config);
+        setRateInputDraft(detail.config);
+      }
+    };
+    window.addEventListener('azahar_rates_updated', onRatesUpdated);
+    return () => window.removeEventListener('azahar_rates_updated', onRatesUpdated);
+  }, [activeRateApartmentId]);
 
   // Synchronize live Booking iCal in background when URL changes or on mount
   useEffect(() => {
@@ -361,6 +396,11 @@ export const FeaturedApartmentsSection: React.FC = () => {
   const handleOpenBooking = async (apt: FeaturedApartment) => {
     const latestApt = apartments.find((a) => a.id === apt.id) || apt;
     setSelectedApartment(latestApt);
+    setActiveRateApartmentId(latestApt.id);
+    const aptRates = getApartmentBookingRates(latestApt);
+    setBookingRates(aptRates);
+    setRateInputDraft(aptRates);
+
     setBookingDates((prev) => ({
       ...prev,
       checkIn: todayStr,
@@ -371,10 +411,10 @@ export const FeaturedApartmentsSection: React.FC = () => {
     setHasSearchedAvailability(false);
     setIsSearchingAvailability(false);
 
-    // Si es Peñíscola o tiene iCal, pre-cargar eventos en background
-    if (apt.id === 'apt-peniscola-primero' || apt.bookingIcalUrl) {
+    // Cargar disponibilidad iCal del apartamento seleccionado
+    const urlToFetch = latestApt.bookingIcalUrl || (latestApt.id === 'apt-peniscola-primero' ? peniscolaIcalUrl : '');
+    if (urlToFetch) {
       try {
-        const urlToFetch = apt.id === 'apt-peniscola-primero' ? peniscolaIcalUrl : (apt.bookingIcalUrl || DEFAULT_PENISCOLA_ICAL_URL);
         fetchBookingIcalFeed(urlToFetch).then((events) => {
           if (events && events.length > 0) {
             setIcalEvents(events);
@@ -384,6 +424,8 @@ export const FeaturedApartmentsSection: React.FC = () => {
       } catch (e) {
         // no-op
       }
+    } else {
+      setIcalEvents([]);
     }
   };
 
@@ -391,15 +433,15 @@ export const FeaturedApartmentsSection: React.FC = () => {
     if (!selectedApartment) return;
     setIsSearchingAvailability(true);
     try {
-      const urlToFetch = selectedApartment.id === 'apt-peniscola-primero'
-        ? peniscolaIcalUrl
-        : (selectedApartment.bookingIcalUrl || DEFAULT_PENISCOLA_ICAL_URL);
+      const urlToFetch = selectedApartment.bookingIcalUrl || (selectedApartment.id === 'apt-peniscola-primero' ? peniscolaIcalUrl : '');
       if (urlToFetch) {
         const events = await fetchBookingIcalFeed(urlToFetch);
         if (events && events.length > 0) {
           setIcalEvents(events);
           setLastSyncTime(new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }));
         }
+      } else {
+        setIcalEvents([]);
       }
     } catch (e) {
       console.warn('Consulta en tiempo real completada');
@@ -621,27 +663,13 @@ export const FeaturedApartmentsSection: React.FC = () => {
     if (!selectedApartment) {
       return calculateBookingStayRate(bookingDates.checkIn, bookingDates.checkOut, bookingRates);
     }
-    if (selectedApartment.id === 'apt-peniscola-primero') {
-      return calculateBookingStayRate(bookingDates.checkIn, bookingDates.checkOut, bookingRates);
-    }
-    // Para otros apartamentos, aplicar el ratio de su precio base respecto a Peñíscola (70 € base)
-    const ratio = selectedApartment.basePricePerNight / 70;
-    const peniscolaCalc = calculateBookingStayRate(bookingDates.checkIn, bookingDates.checkOut, bookingRates);
-    return {
-      ...peniscolaCalc,
-      totalPrice: Math.round(peniscolaCalc.totalPrice * ratio),
-      averagePricePerNight: Math.round(peniscolaCalc.averagePricePerNight * ratio),
-      seasonBreakdown: peniscolaCalc.seasonBreakdown.map((s) => ({
-        ...s,
-        ratePerNight: Math.round(s.ratePerNight * ratio),
-        subtotal: Math.round(s.subtotal * ratio)
-      })),
-      nightsDetail: peniscolaCalc.nightsDetail.map((nd) => ({
-        ...nd,
-        price: Math.round(nd.price * ratio)
-      }))
-    };
-  }, [selectedApartment, bookingDates.checkIn, bookingDates.checkOut, bookingRates]);
+    // Utilizar las tarifas configuradas exactas de este apartamento (Firestore / LocalStorage / modelo)
+    const aptRates = selectedApartment.id === activeRateApartmentId
+      ? bookingRates
+      : getApartmentBookingRates(selectedApartment);
+
+    return calculateBookingStayRate(bookingDates.checkIn, bookingDates.checkOut, aptRates);
+  }, [selectedApartment, bookingDates.checkIn, bookingDates.checkOut, bookingRates, activeRateApartmentId]);
 
   const nightsCount = currentStayRate.nightsCount;
   const totalPrice = currentStayRate.totalPrice;
@@ -1334,16 +1362,14 @@ export const FeaturedApartmentsSection: React.FC = () => {
                                 {showNightsBreakdown ? 'Ocultar desglose noche a noche' : 'Ver desglose noche a noche'}
                               </button>
 
-                              {activeApartment.id === 'apt-peniscola-primero' && (
-                                <button
-                                  type="button"
-                                  onClick={() => setIsEditingRatesInline(!isEditingRatesInline)}
-                                  className="text-slate-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer font-medium"
-                                >
-                                  <Sliders className="w-3 h-3 text-cyan-400" />
-                                  <span>{isEditingRatesInline ? 'Ocultar ajuste rápido' : 'Ajustar tarifas'}</span>
-                                </button>
-                              )}
+                              <button
+                                type="button"
+                                onClick={() => setIsEditingRatesInline(!isEditingRatesInline)}
+                                className="text-slate-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer font-medium"
+                              >
+                                <Sliders className="w-3 h-3 text-cyan-400" />
+                                <span>{isEditingRatesInline ? 'Ocultar ajuste rápido' : 'Ajustar tarifas'}</span>
+                              </button>
                             </div>
 
                             {/* Nights detail list */}
@@ -1360,10 +1386,10 @@ export const FeaturedApartmentsSection: React.FC = () => {
                             )}
 
                             {/* Inline Quick Rate Editor for Owner */}
-                            {isEditingRatesInline && activeApartment.id === 'apt-peniscola-primero' && (
+                            {isEditingRatesInline && (
                               <div className="p-3 bg-slate-900/95 border border-cyan-500/40 rounded-xl space-y-2 mt-2">
                                 <div className="flex items-center justify-between text-[11px] font-bold text-cyan-300">
-                                  <span>Modificar tarifas configuradas para este apartamento:</span>
+                                  <span>Modificar tarifas de {activeApartment.name}:</span>
                                   <button
                                     type="button"
                                     onClick={() => {

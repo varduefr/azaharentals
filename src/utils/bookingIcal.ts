@@ -274,10 +274,13 @@ export function checkAvailability(
  * Descarga el feed iCal desde el endpoint proxy o mediante fallback seguro
  */
 export async function fetchBookingIcalFeed(url: string): Promise<IcalBlockedEvent[]> {
-  const targetUrl = url.trim() || DEFAULT_PENISCOLA_ICAL_URL;
+  const targetUrl = (url || '').trim();
+  if (!targetUrl) {
+    return [];
+  }
 
   try {
-    // Intentar primero a través de nuestro proxy de servidor Vite
+    // Intentar a través de nuestro proxy de servidor
     const proxyUrl = `/api/booking-ical?url=${encodeURIComponent(targetUrl)}`;
     const response = await fetch(proxyUrl, {
       method: 'GET',
@@ -294,11 +297,15 @@ export async function fetchBookingIcalFeed(url: string): Promise<IcalBlockedEven
       }
     }
   } catch (err) {
-    console.info('Proxy iCal temporalmente no disponible, usando fallback sincronizado:', err);
+    console.info('Proxy iCal temporalmente no disponible:', err);
   }
 
-  // Fallback con el snapshot oficial verificado
-  return parseIcalContent(INITIAL_BOOKING_ICAL_SNAPSHOT);
+  // Fallback con el snapshot oficial únicamente si corresponde a la URL de Peñíscola
+  if (targetUrl === DEFAULT_PENISCOLA_ICAL_URL) {
+    return parseIcalContent(INITIAL_BOOKING_ICAL_SNAPSHOT);
+  }
+
+  return [];
 }
 
 /**

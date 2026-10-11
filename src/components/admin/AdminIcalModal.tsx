@@ -149,6 +149,14 @@ export const AdminIcalModal: React.FC<AdminIcalModalProps> = ({
             </ol>
           </div>
 
+          {/* Note about rates vs availability */}
+          <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-[11px] text-slate-400 flex items-start gap-2">
+            <Info className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
+            <span>
+              <strong>Nota sobre precios:</strong> El protocolo iCal de Booking.com sincroniza exclusivamente la disponibilidad de fechas para evitar reservas duplicadas. Las tarifas nocturnas no viajan dentro del feed iCal; puedes fijar las tarifas por temporada de este apartamento desde el botón <em>Gestionar Tarifas</em> en el panel.
+            </span>
+          </div>
+
           <div className="pt-2 flex justify-end gap-2">
             <button
               type="button"

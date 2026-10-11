@@ -27,6 +27,7 @@ export interface FeaturedApartment {
   description: string;
   photos: ApartmentPhoto[];
   bookingIcalUrl?: string;
+  rates?: any;
   active?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -77,6 +78,15 @@ const INITIAL_APARTMENTS: FeaturedApartment[] = [
     reviewsCount: 52,
     basePricePerNight: 70,
     bookingIcalUrl: 'https://ical.booking.com/v1/export?t=266de0d0-36d0-4722-9983-119cc7b7f399',
+    rates: {
+      lowSeason: 70,
+      midSeason: 95,
+      highSeasonJuly: 150,
+      peakSeasonAugust: 185,
+      easterHoliday: 130,
+      weekendSupplement: 0,
+      customDateRanges: []
+    },
     maxGuests: 6,
     bedrooms: 2,
     bathrooms: 2,
@@ -127,15 +137,24 @@ const INITIAL_APARTMENTS: FeaturedApartment[] = [
   },
   {
     id: 'apt-benicarlo-marina',
-    name: 'Residencial Marina Benicarló',
+    name: 'Residencial Marina & Puerto Deportivo',
     town: 'Benicarló',
-    zone: 'Puerto Deportivo / Paseo Marítimo',
-    licenseNumber: 'VT-41905-CS',
-    rating: 4.88,
-    reviewsCount: 38,
-    basePricePerNight: 65,
-    bookingIcalUrl: '',
-    maxGuests: 4,
+    zone: 'Puerto de Benicarló / Playa Morrongo',
+    licenseNumber: 'VT-43180-CS',
+    rating: 4.95,
+    reviewsCount: 44,
+    basePricePerNight: 54,
+    bookingIcalUrl: 'https://ical.booking.com/v1/export?t=266de0d0-36d0-4722-9983-119cc7b7f399',
+    rates: {
+      lowSeason: 54,
+      midSeason: 75,
+      highSeasonJuly: 120,
+      peakSeasonAugust: 145,
+      easterHoliday: 95,
+      weekendSupplement: 0,
+      customDateRanges: []
+    },
+    maxGuests: 6,
     bedrooms: 2,
     bathrooms: 1,
     squareMeters: 75,

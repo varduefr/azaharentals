@@ -8,6 +8,8 @@ const benicarlo1Photo = '/images/benicarlo_marina_apt_1788444573430.jpg';
 const benicarlo2Photo = '/images/benicarlo_morrongo_suite_1788444588447.jpg';
 const alcoverPhoto = '/images/alcover_rural_retreat_1788444605887.jpg';
 
+import { BookingSeasonRateConfig } from '../utils/bookingRates';
+
 export interface ApartmentPhoto {
   url: string;
   caption: string;
@@ -33,6 +35,7 @@ export interface FeaturedApartment {
   description: string;
   photos: ApartmentPhoto[];
   bookingIcalUrl?: string;
+  rates?: BookingSeasonRateConfig;
   active?: boolean;
 }
 
@@ -47,6 +50,15 @@ export const FEATURED_APARTMENTS: FeaturedApartment[] = [
     reviewsCount: 52,
     basePricePerNight: 70,
     bookingIcalUrl: 'https://ical.booking.com/v1/export?t=266de0d0-36d0-4722-9983-119cc7b7f399',
+    rates: {
+      lowSeason: 70,
+      midSeason: 95,
+      highSeasonJuly: 150,
+      peakSeasonAugust: 185,
+      easterHoliday: 130,
+      weekendSupplement: 0,
+      customDateRanges: []
+    },
     maxGuests: 6,
     bedrooms: 2,
     bathrooms: 2,
@@ -104,6 +116,16 @@ export const FEATURED_APARTMENTS: FeaturedApartment[] = [
     rating: 4.95,
     reviewsCount: 44,
     basePricePerNight: 54,
+    bookingIcalUrl: 'https://ical.booking.com/v1/export?t=266de0d0-36d0-4722-9983-119cc7b7f399',
+    rates: {
+      lowSeason: 54,
+      midSeason: 75,
+      highSeasonJuly: 120,
+      peakSeasonAugust: 145,
+      easterHoliday: 95,
+      weekendSupplement: 0,
+      customDateRanges: []
+    },
     maxGuests: 6,
     bedrooms: 2,
     bathrooms: 2,

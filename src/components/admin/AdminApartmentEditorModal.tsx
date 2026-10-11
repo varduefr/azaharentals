@@ -86,6 +86,7 @@ export const AdminApartmentEditorModal: React.FC<AdminApartmentEditorModalProps>
         squareMeters: Number(formData.squareMeters) || 60,
         description: formData.description,
         bookingIcalUrl: formData.bookingIcalUrl,
+        rates: apartmentToEdit?.rates,
         active: formData.active
       };
 

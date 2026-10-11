@@ -145,6 +145,52 @@ async function startServer() {
     }
   });
 
+  // Helper function to fetch iCal feed following redirects
+  const fetchBookingIcalStream = (url: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const client = url.startsWith('https') ? https : http;
+      const req = client.get(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; AzaharRentalsSync/1.0; +https://azaharrentals.com)'
+        }
+      }, (response) => {
+        // Handle redirects
+        if (response.statusCode && response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+          return resolve(fetchBookingIcalStream(response.headers.location));
+        }
+        if (response.statusCode !== 200) {
+          return reject(new Error(`Booking iCal respondió con estado HTTP ${response.statusCode}`));
+        }
+        let data = '';
+        response.on('data', (chunk) => { data += chunk; });
+        response.on('end', () => resolve(data));
+      });
+      req.on('error', reject);
+      req.setTimeout(10000, () => {
+        req.destroy();
+        reject(new Error('Tiempo de espera agotado al conectar con Booking.com'));
+      });
+    });
+  };
+
+  // GET /api/booking-ical proxy (used by client-side calendar sync)
+  app.get('/api/booking-ical', async (req, res) => {
+    try {
+      const targetUrl = req.query.url as string;
+      if (!targetUrl || !targetUrl.startsWith('http')) {
+        return res.status(400).send('URL iCal no válida o no especificada');
+      }
+
+      const icalContent = await fetchBookingIcalStream(targetUrl);
+      res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=300'); // 5 minutes cache
+      res.send(icalContent);
+    } catch (err: any) {
+      console.error('Error fetching Booking iCal proxy GET:', err);
+      res.status(502).send(err.message || 'Error al conectar con Booking.com');
+    }
+  });
+
   // Server-side iCal proxy sync (avoids browser CORS issues when fetching Booking.com iCal feeds)
   app.post('/api/apartments/:id/ical-sync', async (req, res) => {
     try {
@@ -155,35 +201,7 @@ async function startServer() {
         return res.status(400).json({ success: false, error: 'URL iCal no válida o no especificada' });
       }
 
-      // Fetch iCal server side
-      const fetchIcal = (url: string): Promise<string> => {
-        return new Promise((resolve, reject) => {
-          const client = url.startsWith('https') ? https : http;
-          const req = client.get(url, {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (compatible; AzaharRentalsSync/1.0; +https://azaharrentals.com)'
-            }
-          }, (response) => {
-            // Handle redirects
-            if (response.statusCode && response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
-              return resolve(fetchIcal(response.headers.location));
-            }
-            if (response.statusCode !== 200) {
-              return reject(new Error(`Booking iCal respondió con estado HTTP ${response.statusCode}`));
-            }
-            let data = '';
-            response.on('data', (chunk) => { data += chunk; });
-            response.on('end', () => resolve(data));
-          });
-          req.on('error', reject);
-          req.setTimeout(10000, () => {
-            req.destroy();
-            reject(new Error('Tiempo de espera agotado al conectar con Booking.com'));
-          });
-        });
-      };
-
-      const icalContent = await fetchIcal(targetUrl);
+      const icalContent = await fetchBookingIcalStream(targetUrl);
       
       // Save icalUrl if provided
       if (icalUrl) {

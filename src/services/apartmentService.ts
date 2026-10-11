@@ -313,6 +313,7 @@ export async function createApartmentApi(data: Partial<FeaturedApartment>): Prom
     description: data.description || '',
     photos: Array.isArray(data.photos) ? (data.photos as ApartmentPhoto[]) : [],
     bookingIcalUrl: data.bookingIcalUrl || '',
+    rates: data.rates,
     active: data.active !== false
   };
 

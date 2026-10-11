@@ -55,19 +55,36 @@ export interface BookingStayCalculation {
 const STORAGE_PREFIX = 'booking_rates_';
 
 /**
+ * Genera tarifas estacionales predeterminadas y realistas basadas en el precio base del apartamento
+ */
+export function getDefaultRatesForApartment(basePrice: number = 70): BookingSeasonRateConfig {
+  const base = Math.max(30, Math.round(basePrice));
+  return {
+    lowSeason: base,
+    midSeason: Math.round(base * 1.35),
+    highSeasonJuly: Math.round(base * 2.15),
+    peakSeasonAugust: Math.round(base * 2.65),
+    easterHoliday: Math.round(base * 1.85),
+    weekendSupplement: 0,
+    customDateRanges: []
+  };
+}
+
+/**
  * Obtiene la configuración de tarifas guardada para un apartamento
  */
-export function getStoredBookingRates(aptId: string = 'apt-peniscola-primero'): BookingSeasonRateConfig {
+export function getStoredBookingRates(aptId: string = 'apt-peniscola-primero', fallbackBasePrice: number = 70): BookingSeasonRateConfig {
+  const defaultFallback = getDefaultRatesForApartment(fallbackBasePrice);
   try {
     const raw = localStorage.getItem(`${STORAGE_PREFIX}${aptId}`);
     if (raw) {
       const parsed = JSON.parse(raw);
       return {
-        lowSeason: Number(parsed.lowSeason) || DEFAULT_BOOKING_RATES.lowSeason,
-        midSeason: Number(parsed.midSeason) || DEFAULT_BOOKING_RATES.midSeason,
-        highSeasonJuly: Number(parsed.highSeasonJuly) || DEFAULT_BOOKING_RATES.highSeasonJuly,
-        peakSeasonAugust: Number(parsed.peakSeasonAugust) || DEFAULT_BOOKING_RATES.peakSeasonAugust,
-        easterHoliday: Number(parsed.easterHoliday) || DEFAULT_BOOKING_RATES.easterHoliday,
+        lowSeason: Number(parsed.lowSeason) || defaultFallback.lowSeason,
+        midSeason: Number(parsed.midSeason) || defaultFallback.midSeason,
+        highSeasonJuly: Number(parsed.highSeasonJuly) || defaultFallback.highSeasonJuly,
+        peakSeasonAugust: Number(parsed.peakSeasonAugust) || defaultFallback.peakSeasonAugust,
+        easterHoliday: Number(parsed.easterHoliday) || defaultFallback.easterHoliday,
         weekendSupplement: Number(parsed.weekendSupplement) || 0,
         customDateRanges: Array.isArray(parsed.customDateRanges) ? parsed.customDateRanges : []
       };
@@ -75,15 +92,54 @@ export function getStoredBookingRates(aptId: string = 'apt-peniscola-primero'): 
   } catch (err) {
     console.warn('Error leyendo tarifas de Booking de localStorage:', err);
   }
-  return { ...DEFAULT_BOOKING_RATES };
+  return defaultFallback;
 }
 
 /**
- * Guarda la configuración de tarifas de Booking en localStorage
+ * Obtiene las tarifas de Booking configuradas para un apartamento concreto
+ */
+export function getApartmentBookingRates(apt: { id: string; basePricePerNight?: number; rates?: BookingSeasonRateConfig }): BookingSeasonRateConfig {
+  if (!apt) return { ...DEFAULT_BOOKING_RATES };
+  
+  // 1. Prioridad: LocalStorage personalizado del usuario
+  try {
+    const raw = localStorage.getItem(`${STORAGE_PREFIX}${apt.id}`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed.lowSeason === 'number') {
+        return {
+          lowSeason: Number(parsed.lowSeason),
+          midSeason: Number(parsed.midSeason) || Math.round(Number(parsed.lowSeason) * 1.35),
+          highSeasonJuly: Number(parsed.highSeasonJuly) || Math.round(Number(parsed.lowSeason) * 2.15),
+          peakSeasonAugust: Number(parsed.peakSeasonAugust) || Math.round(Number(parsed.lowSeason) * 2.65),
+          easterHoliday: Number(parsed.easterHoliday) || Math.round(Number(parsed.lowSeason) * 1.85),
+          weekendSupplement: Number(parsed.weekendSupplement) || 0,
+          customDateRanges: Array.isArray(parsed.customDateRanges) ? parsed.customDateRanges : []
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('Error leyendo localStorage de tarifas:', err);
+  }
+
+  // 2. Si el apartamento tiene rates explícitas en su modelo (Firestore / catálogo)
+  if (apt.rates && typeof apt.rates.lowSeason === 'number') {
+    return { ...apt.rates };
+  }
+
+  // 3. Fallback inteligente basado en su propio basePricePerNight
+  return getDefaultRatesForApartment(apt.basePricePerNight || 70);
+}
+
+/**
+ * Guarda la configuración de tarifas de Booking en localStorage y emite evento global
  */
 export function saveStoredBookingRates(aptId: string = 'apt-peniscola-primero', config: BookingSeasonRateConfig): void {
   try {
     localStorage.setItem(`${STORAGE_PREFIX}${aptId}`, JSON.stringify(config));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('azahar_rates_updated', { detail: { aptId, config } }));
+    }
   } catch (err) {
     console.warn('Error guardando tarifas de Booking en localStorage:', err);
   }
