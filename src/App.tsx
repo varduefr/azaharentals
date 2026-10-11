@@ -31,37 +31,35 @@ export default function App() {
       const hash = window.location.hash;
       const searchParams = new URLSearchParams(window.location.search);
 
-      const isAdmin =
-        pathname === '/admin' ||
-        pathname.startsWith('/admin') ||
-        hash === '#/admin' ||
-        hash === '#admin' ||
-        searchParams.get('page') === 'admin';
-
-      const isSim = 
-        pathname === '/simulador' || 
-        pathname === '/simulador-rentabilidad' || 
-        hash === '#/simulador' || 
-        hash === '#simulador' ||
-        searchParams.get('page') === 'simulador';
-
-      const isLaundry =
-        pathname === '/laundry' ||
-        pathname.startsWith('/laundry') ||
-        hash === '#/laundry' ||
-        hash === '#laundry' ||
-        searchParams.get('page') === 'laundry';
-
-      if (isAdmin) {
+      // 1. Pathname check takes absolute precedence over hash
+      if (pathname === '/admin' || pathname.startsWith('/admin')) {
         setCurrentPage('admin');
-      } else if (isSim) {
+        return;
+      }
+      if (pathname === '/laundry' || pathname.startsWith('/laundry')) {
+        setCurrentPage('laundry');
+        return;
+      }
+      if (pathname === '/simulador' || pathname.startsWith('/simulador') || pathname === '/simulador-rentabilidad') {
         setCurrentPage('simulator');
         const muni = searchParams.get('muni') || searchParams.get('town');
         const hab = searchParams.get('hab') || searchParams.get('bedrooms');
         if (muni) setSelectedTown(muni);
         if (hab) setSelectedBedrooms(Number(hab) || 2);
-      } else if (isLaundry) {
+        return;
+      }
+
+      // 2. Fallbacks for query params or hash routing
+      if (hash === '#/admin' || hash === '#admin' || searchParams.get('page') === 'admin') {
+        setCurrentPage('admin');
+      } else if (hash === '#/laundry' || hash === '#laundry' || searchParams.get('page') === 'laundry') {
         setCurrentPage('laundry');
+      } else if (hash === '#/simulador' || hash === '#simulador' || searchParams.get('page') === 'simulador') {
+        setCurrentPage('simulator');
+        const muni = searchParams.get('muni') || searchParams.get('town');
+        const hab = searchParams.get('hab') || searchParams.get('bedrooms');
+        if (muni) setSelectedTown(muni);
+        if (hab) setSelectedBedrooms(Number(hab) || 2);
       } else {
         setCurrentPage('home');
       }
@@ -74,13 +72,18 @@ export default function App() {
     };
 
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+    };
   }, []);
 
   const navigateToAdmin = () => {
     setCurrentPage('admin');
     try {
       window.history.pushState({ page: 'admin' }, '', '/admin');
+      window.dispatchEvent(new PopStateEvent('popstate'));
     } catch {
       window.location.hash = '#/admin';
     }
@@ -91,6 +94,7 @@ export default function App() {
     setCurrentPage('laundry');
     try {
       window.history.pushState({ page: 'laundry' }, '', '/laundry');
+      window.dispatchEvent(new PopStateEvent('popstate'));
     } catch {
       window.location.hash = '#/laundry';
     }
@@ -109,6 +113,7 @@ export default function App() {
     try {
       const targetUrl = `/simulador?muni=${encodeURIComponent(locToUse)}&hab=${bedToUse}`;
       window.history.pushState({ page: 'simulator', town: locToUse, bedrooms: bedToUse }, '', targetUrl);
+      window.dispatchEvent(new PopStateEvent('popstate'));
     } catch {
       window.location.hash = '#/simulador';
     }
@@ -122,6 +127,7 @@ export default function App() {
     try {
       const targetUrl = sectionId ? `/#${sectionId}` : '/';
       window.history.pushState({ page: 'home' }, '', targetUrl);
+      window.dispatchEvent(new PopStateEvent('popstate'));
     } catch {
       window.location.hash = sectionId ? `#${sectionId}` : '#/';
     }

@@ -92,10 +92,10 @@ export const SimulatorPage: React.FC<SimulatorPageProps> = ({
             <span aria-hidden="true">/</span>
             <button 
               type="button"
-              onClick={() => onNavigateHome('destinos')}
+              onClick={() => onNavigateHome('servicios')}
               className="hover:text-blue-600 transition-colors cursor-pointer"
             >
-              Destinos Castellón
+              Servicios 360°
             </button>
             <span aria-hidden="true">/</span>
             <span className="text-slate-900 font-semibold" aria-current="page">
@@ -299,9 +299,10 @@ export const SimulatorPage: React.FC<SimulatorPageProps> = ({
               <button
                 type="button"
                 onClick={() => onNavigateHome()}
-                className="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs sm:text-sm border border-slate-700 transition-colors cursor-pointer"
+                className="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs sm:text-sm border border-slate-700 transition-colors cursor-pointer flex items-center gap-1.5"
               >
-                Volver a la Página Principal
+                <Home className="w-4 h-4 text-slate-400" />
+                <span>Volver al Inicio</span>
               </button>
             </div>
           </div>

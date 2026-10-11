@@ -44,7 +44,7 @@ import {
   Maximize2
 } from 'lucide-react';
 import { FEATURED_APARTMENTS, FeaturedApartment, ApartmentPhoto } from '../data/featuredApartments';
-import { fetchApartments, subscribeApartments, sortApartments, updateApartmentApi } from '../services/apartmentService';
+import { fetchApartments, subscribeApartments, sortApartments, updateApartmentApi, getStoredAdminToken } from '../services/apartmentService';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import { sendEmailNotification } from '../services/emailService';
@@ -198,8 +198,18 @@ export const FeaturedApartmentsSection: React.FC = () => {
     getStoredBookingRates('apt-peniscola-primero')
   );
   const [rateSuccessAlert, setRateSuccessAlert] = useState<string>('');
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => !!getStoredAdminToken());
   const [isEditingRatesInline, setIsEditingRatesInline] = useState<boolean>(false);
   const [showNightsBreakdown, setShowNightsBreakdown] = useState<boolean>(false);
+
+  useEffect(() => {
+    const checkAdmin = () => {
+      setIsAdmin(!!getStoredAdminToken());
+    };
+    checkAdmin();
+    window.addEventListener('storage', checkAdmin);
+    return () => window.removeEventListener('storage', checkAdmin);
+  }, []);
 
   // Live simulation test states inside the admin rate panel
   const [simTestCheckIn, setSimTestCheckIn] = useState<string>('2026-10-05');
@@ -1362,14 +1372,16 @@ export const FeaturedApartmentsSection: React.FC = () => {
                                 {showNightsBreakdown ? 'Ocultar desglose noche a noche' : 'Ver desglose noche a noche'}
                               </button>
 
-                              <button
-                                type="button"
-                                onClick={() => setIsEditingRatesInline(!isEditingRatesInline)}
-                                className="text-slate-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer font-medium"
-                              >
-                                <Sliders className="w-3 h-3 text-cyan-400" />
-                                <span>{isEditingRatesInline ? 'Ocultar ajuste rápido' : 'Ajustar tarifas'}</span>
-                              </button>
+                              {isAdmin && (
+                                <button
+                                  type="button"
+                                  onClick={() => setIsEditingRatesInline(!isEditingRatesInline)}
+                                  className="text-slate-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer font-medium"
+                                >
+                                  <Sliders className="w-3 h-3 text-cyan-400" />
+                                  <span>{isEditingRatesInline ? 'Ocultar ajuste rápido' : 'Ajustar tarifas'}</span>
+                                </button>
+                              )}
                             </div>
 
                             {/* Nights detail list */}
@@ -1386,7 +1398,7 @@ export const FeaturedApartmentsSection: React.FC = () => {
                             )}
 
                             {/* Inline Quick Rate Editor for Owner */}
-                            {isEditingRatesInline && (
+                            {isAdmin && isEditingRatesInline && (
                               <div className="p-3 bg-slate-900/95 border border-cyan-500/40 rounded-xl space-y-2 mt-2">
                                 <div className="flex items-center justify-between text-[11px] font-bold text-cyan-300">
                                   <span>Modificar tarifas de {activeApartment.name}:</span>
@@ -1735,7 +1747,7 @@ export const FeaturedApartmentsSection: React.FC = () => {
       )}
 
       {/* Photo Management & Upload Modal for Peñíscola Apartment */}
-      {isPhotoModalOpen && (
+      {isAdmin && isPhotoModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-fadeIn">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full max-h-[92vh] overflow-y-auto shadow-2xl text-white">
             {/* Modal Header */}
