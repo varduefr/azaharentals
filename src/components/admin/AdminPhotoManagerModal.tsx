@@ -241,12 +241,7 @@ export const AdminPhotoManagerModal: React.FC<AdminPhotoManagerModalProps> = ({
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           const target = e.currentTarget;
-                          if (!target.dataset.fallbackTried) {
-                            target.dataset.fallbackTried = 'true';
-                            target.src = '/images/peniscola_coast_1788275771316.jpg';
-                          } else {
-                            target.src = 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=600&q=80';
-                          }
+                          target.src = 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=600&q=80';
                         }}
                       />
                       {isCover && (

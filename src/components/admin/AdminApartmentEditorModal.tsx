@@ -105,7 +105,7 @@ export const AdminApartmentEditorModal: React.FC<AdminApartmentEditorModalProps>
           ],
           photos: [
             {
-              url: '/images/peniscola_coast_1788275771316.jpg',
+              url: '/images/peniscola_balcon_terraza_1788561222890.jpg',
               caption: 'Foto de Portada'
             }
           ]

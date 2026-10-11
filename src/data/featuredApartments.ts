@@ -3,7 +3,6 @@
 
 const peniscolaBalconPhoto = '/images/peniscola_balcon_terraza_1788561222890.jpg';
 const peniscolaSalonPhoto = '/images/peniscola_salon_principal_1788444548906.jpg';
-const peniscolaVistasPhoto = '/images/peniscola_coast_1788275771316.jpg';
 const benicarlo1Photo = '/images/benicarlo_marina_apt_1788444573430.jpg';
 const benicarlo2Photo = '/images/benicarlo_morrongo_suite_1788444588447.jpg';
 const alcoverPhoto = '/images/alcover_rural_retreat_1788444605887.jpg';
@@ -92,10 +91,6 @@ export const FEATURED_APARTMENTS: FeaturedApartment[] = [
       {
         url: peniscolaSalonPhoto,
         caption: 'Salón principal con salida a terraza y vistas al mar en Peñíscola'
-      },
-      {
-        url: peniscolaVistasPhoto,
-        caption: 'Vistas panorámicas hacia el litoral y el Castillo Papa Luna'
       },
       {
         url: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80',

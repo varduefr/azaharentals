@@ -44,7 +44,7 @@ import {
   Maximize2
 } from 'lucide-react';
 import { FEATURED_APARTMENTS, FeaturedApartment, ApartmentPhoto } from '../data/featuredApartments';
-import { fetchApartments, subscribeApartments, sortApartments, updateApartmentApi, getStoredAdminToken } from '../services/apartmentService';
+import { fetchApartments, subscribeApartments, sortApartments, updateApartmentApi, getStoredAdminToken, sanitizeApartmentPhotos, getLocalApartments } from '../services/apartmentService';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import { sendEmailNotification } from '../services/emailService';
@@ -99,7 +99,8 @@ const DEFAULT_FALLBACK_APARTMENT_PHOTOS: ApartmentPhoto[] = [
 ];
 
 const getApartmentDisplayPhotos = (apt: FeaturedApartment): ApartmentPhoto[] => {
-  const rawPhotos = apt.photos || [];
+  const sanitizedApt = sanitizeApartmentPhotos(apt);
+  const rawPhotos = sanitizedApt.photos || [];
   const normalized = rawPhotos.map((p) => ({
     ...p,
     url: normalizePhotoUrl(p.url)
@@ -123,9 +124,9 @@ export const FeaturedApartmentsSection: React.FC = () => {
   const { currentTheme } = useTheme();
   const { showSuccess } = useToast();
 
-  // Apartment list in state, initialized from data and refreshed from central backend DB
+  // Apartment list in state, initialized from local cache/backend and refreshed from central DB
   const [apartments, setApartments] = useState<FeaturedApartment[]>(() =>
-    sortApartments(FEATURED_APARTMENTS).map((apt) => ({
+    getLocalApartments().map((apt) => ({
       ...apt,
       photos: (apt.photos || []).map((p) => ({
         ...p,
@@ -208,7 +209,13 @@ export const FeaturedApartmentsSection: React.FC = () => {
     };
     checkAdmin();
     window.addEventListener('storage', checkAdmin);
-    return () => window.removeEventListener('storage', checkAdmin);
+    window.addEventListener('focus', checkAdmin);
+    window.addEventListener('azahar_admin_auth_changed', checkAdmin);
+    return () => {
+      window.removeEventListener('storage', checkAdmin);
+      window.removeEventListener('focus', checkAdmin);
+      window.removeEventListener('azahar_admin_auth_changed', checkAdmin);
+    };
   }, []);
 
   // Live simulation test states inside the admin rate panel
@@ -324,14 +331,23 @@ export const FeaturedApartmentsSection: React.FC = () => {
       const saved = localStorage.getItem('peniscola_custom_photos');
       if (saved) {
         const parsed = JSON.parse(saved) as ApartmentPhoto[];
-        if (Array.isArray(parsed) && parsed.length > 0 && parsed.every(p => p.url.startsWith('data:'))) {
-          setApartments((prev) =>
-            prev.map((apt) =>
-              apt.id === 'apt-peniscola-primero' ? { ...apt, photos: parsed } : apt
-            )
-          );
-        } else {
-          localStorage.removeItem('peniscola_custom_photos');
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const sanitized = parsed.filter((p) => {
+            const url = (p?.url || '').toLowerCase();
+            const caption = (p?.caption || '').toLowerCase();
+            return !url.includes('peniscola_coast_1788275771316') &&
+              !(caption.includes('vistas panor') && caption.includes('litoral') && caption.includes('castillo'));
+          });
+          if (sanitized.length > 0) {
+            setApartments((prev) =>
+              prev.map((apt) =>
+                apt.id === 'apt-peniscola-primero' ? { ...apt, photos: sanitized } : apt
+              )
+            );
+            localStorage.setItem('peniscola_custom_photos', JSON.stringify(sanitized));
+          } else {
+            localStorage.removeItem('peniscola_custom_photos');
+          }
         }
       }
     } catch (err) {
@@ -606,12 +622,10 @@ export const FeaturedApartmentsSection: React.FC = () => {
       // Reset active index to 0 so cover is immediately shown
       setActivePhotoIndices((prev) => ({ ...prev, 'apt-peniscola-primero': 0 }));
 
-      // Save to localStorage
-      try {
-        localStorage.setItem('peniscola_custom_photos', JSON.stringify(ordered));
-      } catch (e) {
-        console.warn('Could not save to localStorage', e);
-      }
+      // Persist in Backend API, Cloud Firestore & LocalStorage
+      updateApartmentApi('apt-peniscola-primero', { photos: ordered }).catch((err) => {
+        console.warn('Error guardando fotos en base de datos:', err);
+      });
 
       setUploadSuccessMsg(`¡${ordered.length} fotos cargadas con éxito! Portada: ${ordered[0].caption}`);
       setTimeout(() => setUploadSuccessMsg(''), 4000);
@@ -637,11 +651,10 @@ export const FeaturedApartmentsSection: React.FC = () => {
     );
     setActivePhotoIndices((prev) => ({ ...prev, 'apt-peniscola-primero': 0 }));
 
-    try {
-      localStorage.setItem('peniscola_custom_photos', JSON.stringify(updated));
-    } catch (e) {
-      console.warn(e);
-    }
+    // Persist in Backend API, Cloud Firestore & LocalStorage
+    updateApartmentApi('apt-peniscola-primero', { photos: updated }).catch((err) => {
+      console.warn('Error guardando portada en base de datos:', err);
+    });
   };
 
   const handleResetPhotos = () => {
@@ -650,15 +663,20 @@ export const FeaturedApartmentsSection: React.FC = () => {
     } catch {
       // Ignore storage errors
     }
+    const cleanDefaultPhotos = FEATURED_APARTMENTS.find((a) => a.id === 'apt-peniscola-primero')?.photos || [];
     setApartments((prev) =>
       prev.map((apt) =>
         apt.id === 'apt-peniscola-primero'
-          ? { ...apt, photos: FEATURED_APARTMENTS[0].photos }
+          ? { ...apt, photos: cleanDefaultPhotos }
           : apt
       )
     );
     setActivePhotoIndices((prev) => ({ ...prev, 'apt-peniscola-primero': 0 }));
-    setUploadSuccessMsg('Fotos restablecidas a las fotos originales.');
+
+    // Persist reset in Backend API & Firestore
+    updateApartmentApi('apt-peniscola-primero', { photos: cleanDefaultPhotos }).catch(() => {});
+
+    setUploadSuccessMsg('Fotos restablecidas a las fotos originales del catálogo.');
     setTimeout(() => setUploadSuccessMsg(''), 3000);
   };
 

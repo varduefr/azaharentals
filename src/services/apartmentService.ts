@@ -73,10 +73,31 @@ function getTownPriority(town?: string): number {
 }
 
 /**
+ * Sanitiza las fotos de un apartamento asegurando que la foto eliminada 'peniscola_coast_1788275771316.jpg'
+ * ('Vistas panorámicas hacia el litoral y el Castillo Papa Luna') no reaparezca nunca en Ático Mirador del Castillo.
+ */
+export function sanitizeApartmentPhotos(apt: FeaturedApartment): FeaturedApartment {
+  if (!apt) return apt;
+  const rawPhotos = Array.isArray(apt.photos) ? apt.photos : [];
+  if (apt.id === 'apt-peniscola-primero') {
+    const filtered = rawPhotos.filter((p) => {
+      const url = (p?.url || '').toLowerCase();
+      const caption = (p?.caption || '').toLowerCase();
+      const isDeletedPhoto =
+        url.includes('peniscola_coast_1788275771316') ||
+        (caption.includes('vistas panor') && caption.includes('litoral') && caption.includes('castillo'));
+      return !isDeletedPhoto;
+    });
+    return { ...apt, photos: filtered };
+  }
+  return { ...apt, photos: rawPhotos };
+}
+
+/**
  * Sorts apartments so Peñíscola is always first, followed by the two Benicarló apartments, and finally Alcover.
  */
 export function sortApartments(list: FeaturedApartment[]): FeaturedApartment[] {
-  return [...list].sort((a, b) => {
+  return [...list].map(sanitizeApartmentPhotos).sort((a, b) => {
     const orderA = APARTMENT_PRIORITY_ORDER[a.id] ?? getTownPriority(a.town);
     const orderB = APARTMENT_PRIORITY_ORDER[b.id] ?? getTownPriority(b.town);
     if (orderA !== orderB) {
@@ -86,7 +107,7 @@ export function sortApartments(list: FeaturedApartment[]): FeaturedApartment[] {
   });
 }
 
-function getLocalApartments(): FeaturedApartment[] {
+export function getLocalApartments(): FeaturedApartment[] {
   try {
     const raw = localStorage.getItem(LOCAL_APARTMENTS_KEY);
     if (raw) {
@@ -101,9 +122,10 @@ function getLocalApartments(): FeaturedApartment[] {
   return sortApartments(FEATURED_APARTMENTS);
 }
 
-function saveLocalApartments(apartments: FeaturedApartment[]): void {
+export function saveLocalApartments(apartments: FeaturedApartment[]): void {
   try {
-    localStorage.setItem(LOCAL_APARTMENTS_KEY, JSON.stringify(sortApartments(apartments)));
+    const sorted = sortApartments(apartments);
+    localStorage.setItem(LOCAL_APARTMENTS_KEY, JSON.stringify(sorted));
   } catch (e) {
     console.error('Error saving local apartments:', e);
   }
@@ -130,6 +152,9 @@ export function setStoredAdminSession(token: string, user: any): void {
   try {
     localStorage.setItem(TOKEN_KEY, token);
     localStorage.setItem(USER_KEY, JSON.stringify(user));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('azahar_admin_auth_changed', { detail: { token, user } }));
+    }
   } catch (e) {
     console.error('Error saving session:', e);
   }
@@ -139,6 +164,9 @@ export function clearStoredAdminSession(): void {
   try {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('azahar_admin_auth_changed', { detail: null }));
+    }
   } catch (e) {
     console.error('Error clearing session:', e);
   }
@@ -197,9 +225,24 @@ async function loadApartmentPhotosSubcollection(apartmentId: string, fallbackPho
 }
 
 /**
- * Fetch all apartments from Cloud Firestore database with photos from subcollections.
+ * Fetch all apartments from backend API and Cloud Firestore database with photos.
  */
 export async function fetchApartments(): Promise<FeaturedApartment[]> {
+  // 1. Intentar cargar desde el backend Express /api/apartments (persistencia en data/apartments.json)
+  let serverList: FeaturedApartment[] | null = null;
+  try {
+    const resp = await fetch('/api/apartments');
+    if (resp.ok) {
+      const json = await resp.json();
+      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+        serverList = sortApartments(json.data.map(sanitizeApartmentPhotos));
+      }
+    }
+  } catch {
+    // Modo offline o preview sin backend
+  }
+
+  // 2. Consultar Cloud Firestore para sincronización en la nube
   try {
     const colRef = collection(db, 'apartments');
     const snapshot = await getDocs(colRef);
@@ -207,13 +250,25 @@ export async function fetchApartments(): Promise<FeaturedApartment[]> {
     if (!snapshot.empty) {
       const list = await Promise.all(snapshot.docs.map(async (d) => {
         const raw = d.data() as FeaturedApartment;
-        const initialPhotos = Array.isArray(raw.photos) && raw.photos.length > 0 ? raw.photos : [];
-        const loadedPhotos = await loadApartmentPhotosSubcollection(d.id, initialPhotos);
-        return {
+        let photos = Array.isArray(raw.photos) && raw.photos.length > 0 ? raw.photos : [];
+        if (photos.length === 0) {
+          const loadedPhotos = await loadApartmentPhotosSubcollection(d.id, []);
+          if (loadedPhotos.length > 0) {
+            photos = loadedPhotos;
+          }
+        }
+        // Si no hay fotos en Firestore, consultar el backend server o fallback de catálogo
+        if (photos.length === 0) {
+          const fromServer = serverList?.find((a) => a.id === d.id);
+          photos = fromServer?.photos?.length 
+            ? fromServer.photos 
+            : (FEATURED_APARTMENTS.find((a) => a.id === d.id)?.photos || []);
+        }
+        return sanitizeApartmentPhotos({
           ...raw,
           id: d.id,
-          photos: loadedPhotos.length > 0 ? loadedPhotos : (FEATURED_APARTMENTS.find((a) => a.id === d.id)?.photos || [])
-        };
+          photos
+        });
       }));
 
       const sortedList = sortApartments(list);
@@ -221,28 +276,39 @@ export async function fetchApartments(): Promise<FeaturedApartment[]> {
       return sortedList;
     }
 
-    // Seed initial portfolio to Cloud Firestore
+    // Si Firestore aún no tiene documentos pero el backend sí los tiene
+    if (serverList && serverList.length > 0) {
+      saveLocalApartments(serverList);
+      return serverList;
+    }
+
+    // Sembrar catálogo inicial limpio en Cloud Firestore
     console.log('Sembrando catálogo inicial de Azahar Rentals en Cloud Firestore...');
     const initialSorted = sortApartments(FEATURED_APARTMENTS);
     for (const apt of initialSorted) {
-      const { photos, ...rest } = apt;
       await setDoc(doc(db, 'apartments', apt.id), {
-        ...rest,
-        photosCount: photos?.length || 0,
+        ...apt,
+        photosCount: apt.photos?.length || 0,
+        coverPhoto: apt.photos?.[0]?.url || '',
         updatedAt: new Date().toISOString()
       });
-      if (photos && photos.length > 0) {
-        await saveApartmentPhotosSubcollection(apt.id, photos);
+      if (apt.photos && apt.photos.length > 0) {
+        await saveApartmentPhotosSubcollection(apt.id, apt.photos);
       }
     }
     saveLocalApartments(initialSorted);
     return initialSorted;
   } catch (err) {
-    console.warn('Firestore fetchApartments fallback to local data:', err);
+    console.warn('Firestore fetchApartments fallback a backend o local data:', err);
     try {
       handleFirestoreError(err, OperationType.GET, 'apartments');
     } catch {
       // Continue to fallback
+    }
+
+    if (serverList && serverList.length > 0) {
+      saveLocalApartments(serverList);
+      return serverList;
     }
     return getLocalApartments();
   }
@@ -262,13 +328,21 @@ export function subscribeApartments(onUpdate: (apartments: FeaturedApartment[]) 
           if (!snapshot.empty) {
             const list = await Promise.all(snapshot.docs.map(async (d) => {
               const raw = d.data() as FeaturedApartment;
-              const initialPhotos = Array.isArray(raw.photos) && raw.photos.length > 0 ? raw.photos : [];
-              const loadedPhotos = await loadApartmentPhotosSubcollection(d.id, initialPhotos);
-              return {
+              let photos = Array.isArray(raw.photos) && raw.photos.length > 0 ? raw.photos : [];
+              if (photos.length === 0) {
+                const loadedPhotos = await loadApartmentPhotosSubcollection(d.id, []);
+                if (loadedPhotos.length > 0) {
+                  photos = loadedPhotos;
+                }
+              }
+              if (photos.length === 0) {
+                photos = FEATURED_APARTMENTS.find((a) => a.id === d.id)?.photos || [];
+              }
+              return sanitizeApartmentPhotos({
                 ...raw,
                 id: d.id,
-                photos: loadedPhotos.length > 0 ? loadedPhotos : (FEATURED_APARTMENTS.find((a) => a.id === d.id)?.photos || [])
-              };
+                photos
+              });
             }));
             const sortedList = sortApartments(list);
             saveLocalApartments(sortedList);
@@ -289,11 +363,11 @@ export function subscribeApartments(onUpdate: (apartments: FeaturedApartment[]) 
 }
 
 /**
- * Create a new apartment and persist directly in Cloud Firestore.
+ * Create a new apartment and persist directly in Cloud Firestore and Backend API.
  */
 export async function createApartmentApi(data: Partial<FeaturedApartment>): Promise<FeaturedApartment> {
   const id = data.id || `apt-${Date.now()}`;
-  const newApt: FeaturedApartment = {
+  const newApt: FeaturedApartment = sanitizeApartmentPhotos({
     id,
     name: data.name || 'Nuevo Apartamento',
     town: data.town || 'Castellón de la Plana',
@@ -315,28 +389,39 @@ export async function createApartmentApi(data: Partial<FeaturedApartment>): Prom
     bookingIcalUrl: data.bookingIcalUrl || '',
     rates: data.rates,
     active: data.active !== false
-  };
+  });
 
+  // 1. Persistir en backend API (/api/apartments)
   try {
-    // 1. Save photos into subcollection
+    await fetch('/api/apartments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newApt)
+    });
+  } catch (apiErr) {
+    console.warn('Backend API createApartment sync:', apiErr);
+  }
+
+  // 2. Persistir en Cloud Firestore
+  try {
     if (newApt.photos && newApt.photos.length > 0) {
       await saveApartmentPhotosSubcollection(id, newApt.photos);
     }
 
-    // 2. Save parent document without large photo payload (~2KB total)
-    const { photos, ...parentData } = newApt;
     await setDoc(doc(db, 'apartments', id), {
-      ...parentData,
+      ...newApt,
       photosCount: newApt.photos.length,
       coverPhoto: newApt.photos[0]?.url || '',
       updatedAt: new Date().toISOString()
     });
   } catch (err) {
     console.error('Error saving new apartment to Firestore:', err);
-    handleFirestoreError(err, OperationType.CREATE, `apartments/${id}`);
+    try {
+      handleFirestoreError(err, OperationType.CREATE, `apartments/${id}`);
+    } catch {}
   }
 
-  // Update local cache & dispatch cross-component event
+  // 3. Actualizar caché local
   const current = getLocalApartments();
   const updated = [newApt, ...current.filter((a) => a.id !== id)];
   saveLocalApartments(updated);
@@ -348,43 +433,59 @@ export async function createApartmentApi(data: Partial<FeaturedApartment>): Prom
 }
 
 /**
- * Update an existing apartment and persist in Cloud Firestore.
- * Automatically saves photos to subcollection to prevent the 1MB document limit error.
+ * Update an existing apartment and persist in Cloud Firestore and Backend API.
+ * Ensures photos array is stored directly on the document and subcollection.
  */
 export async function updateApartmentApi(id: string, data: Partial<FeaturedApartment>): Promise<FeaturedApartment> {
   const current = getLocalApartments();
   const existing = current.find((a) => a.id === id);
-  const updatedApt: FeaturedApartment = {
+  const updatedApt: FeaturedApartment = sanitizeApartmentPhotos({
     ...(existing || {}),
     ...data,
     id
-  } as FeaturedApartment;
+  } as FeaturedApartment);
 
+  // 1. Sincronizar inmediatamente con el Backend API (/api/apartments/:id)
   try {
-    // 1. Save photos into subcollection if updated
-    if (data.photos && Array.isArray(data.photos)) {
-      await saveApartmentPhotosSubcollection(id, data.photos);
+    await fetch(`/api/apartments/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedApt)
+    });
+  } catch (apiErr) {
+    console.warn('Backend API updateApartment sync:', apiErr);
+  }
+
+  // 2. Sincronizar con Cloud Firestore
+  try {
+    if (updatedApt.photos && Array.isArray(updatedApt.photos)) {
+      await saveApartmentPhotosSubcollection(id, updatedApt.photos);
     }
 
-    // 2. Save parent document stripped of oversized base64 arrays
-    const { photos, ...parentData } = updatedApt;
-    const cleanParentDoc = {
-      ...parentData,
+    await setDoc(doc(db, 'apartments', id), {
+      ...updatedApt,
       photosCount: updatedApt.photos?.length || 0,
       coverPhoto: updatedApt.photos?.[0]?.url || '',
       updatedAt: new Date().toISOString()
-    };
-
-    // Use full overwrite without merge on parent to flush any oversized photos field
-    await setDoc(doc(db, 'apartments', id), cleanParentDoc);
+    }, { merge: true });
   } catch (err) {
     console.error('Error updating apartment in Firestore:', err);
-    handleFirestoreError(err, OperationType.UPDATE, `apartments/${id}`);
+    try {
+      handleFirestoreError(err, OperationType.UPDATE, `apartments/${id}`);
+    } catch {}
   }
 
-  // Update local cache & dispatch cross-component event
+  // 3. Sincronizar con caché local
   const updatedList = current.map((a) => (a.id === id ? updatedApt : a));
   saveLocalApartments(updatedList);
+
+  // Si es Peñíscola, sincronizar también la clave legacy peniscola_custom_photos
+  if (id === 'apt-peniscola-primero') {
+    try {
+      localStorage.setItem('peniscola_custom_photos', JSON.stringify(updatedApt.photos));
+    } catch {}
+  }
+
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('azahar_apartments_updated', { detail: updatedApt }));
   }
@@ -393,11 +494,18 @@ export async function updateApartmentApi(id: string, data: Partial<FeaturedApart
 }
 
 /**
- * Delete an apartment permanently from Cloud Firestore including subcollections.
+ * Delete an apartment permanently from Cloud Firestore and Backend API.
  */
 export async function deleteApartmentApi(id: string): Promise<boolean> {
+  // 1. Backend API
   try {
-    // Delete photos subcollection
+    await fetch(`/api/apartments/${id}`, { method: 'DELETE' });
+  } catch (apiErr) {
+    console.warn('Backend API deleteApartment sync:', apiErr);
+  }
+
+  // 2. Firestore
+  try {
     const snap = await getDocs(collection(db, 'apartments', id, 'photos'));
     for (const d of snap.docs) {
       await deleteDoc(doc(db, 'apartments', id, 'photos', d.id));
@@ -405,10 +513,12 @@ export async function deleteApartmentApi(id: string): Promise<boolean> {
     await deleteDoc(doc(db, 'apartments', id));
   } catch (err) {
     console.error('Error deleting apartment in Firestore:', err);
-    handleFirestoreError(err, OperationType.DELETE, `apartments/${id}`);
+    try {
+      handleFirestoreError(err, OperationType.DELETE, `apartments/${id}`);
+    } catch {}
   }
 
-  // Update local cache & dispatch cross-component event
+  // 3. Actualizar caché local
   const current = getLocalApartments();
   saveLocalApartments(current.filter((a) => a.id !== id));
   if (typeof window !== 'undefined') {

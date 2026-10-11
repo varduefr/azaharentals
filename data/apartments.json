@@ -9,9 +9,18 @@
     "reviewsCount": 52,
     "basePricePerNight": 70,
     "bookingIcalUrl": "https://ical.booking.com/v1/export?t=266de0d0-36d0-4722-9983-119cc7b7f399",
-    "maxGuests": 4,
-    "bedrooms": 1,
-    "bathrooms": 1,
+    "rates": {
+      "lowSeason": 70,
+      "midSeason": 95,
+      "highSeasonJuly": 150,
+      "peakSeasonAugust": 185,
+      "easterHoliday": 130,
+      "weekendSupplement": 0,
+      "customDateRanges": []
+    },
+    "maxGuests": 6,
+    "bedrooms": 2,
+    "bathrooms": 2,
     "squareMeters": 88,
     "isFirstLineBeach": true,
     "distanceToBeach": "Primera línea (25m)",
@@ -44,10 +53,6 @@
         "caption": "Salón principal con salida a terraza y vistas al mar en Peñíscola"
       },
       {
-        "url": "/images/peniscola_coast_1788275771316.jpg",
-        "caption": "Vistas frontales al mar Mediterráneo y playa de Peñíscola"
-      },
-      {
         "url": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
         "caption": "Terraza y salón diáfano con iluminación natural"
       },
@@ -61,22 +66,31 @@
   },
   {
     "id": "apt-benicarlo-marina",
-    "name": "Residencial Marina Benicarló",
+    "name": "Residencial Marina & Puerto Deportivo",
     "town": "Benicarló",
-    "zone": "Puerto Deportivo / Paseo Marítimo",
-    "licenseNumber": "VT-41905-CS",
-    "rating": 4.88,
-    "reviewsCount": 38,
-    "basePricePerNight": 65,
-    "bookingIcalUrl": "",
-    "maxGuests": 4,
+    "zone": "Puerto de Benicarló / Playa Morrongo",
+    "licenseNumber": "VT-43180-CS",
+    "rating": 4.95,
+    "reviewsCount": 44,
+    "basePricePerNight": 54,
+    "bookingIcalUrl": "https://ical.booking.com/v1/export?t=266de0d0-36d0-4722-9983-119cc7b7f399",
+    "rates": {
+      "lowSeason": 54,
+      "midSeason": 75,
+      "highSeasonJuly": 120,
+      "peakSeasonAugust": 145,
+      "easterHoliday": 95,
+      "weekendSupplement": 0,
+      "customDateRanges": []
+    },
+    "maxGuests": 6,
     "bedrooms": 2,
-    "bathrooms": 1,
-    "squareMeters": 75,
+    "bathrooms": 2,
+    "squareMeters": 80,
     "isFirstLineBeach": false,
-    "distanceToBeach": "50 metros del puerto y playa",
+    "distanceToBeach": "A 100m de Playa Morrongo",
     "highlights": [
-      "Vistas al puerto deportivo y lonja tradicional de Benicarló",
+      "A 2 minutos a pie del puerto náutico y la lonja gastronómica",
       "Piscina comunitaria y solárium ajardinado en azotea",
       "Totalmente climatizado con split inverter en todas las estancias",
       "A 3 minutos de los mejores restaurantes marineros"

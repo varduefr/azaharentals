@@ -364,7 +364,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic, 
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
               {filteredApartments.map((apt) => {
-                const rawPhoto = apt.photos?.[0]?.url || '/images/peniscola_coast_1788275771316.jpg';
+                const rawPhoto = apt.photos?.[0]?.url || '/images/peniscola_balcon_terraza_1788561222890.jpg';
                 const coverPhoto = rawPhoto.replace(/^\/src\/assets\/images\//, '/images/');
                 const hasIcal = !!apt.bookingIcalUrl;
                 const amenitiesList = apt.amenities || ['Wifi', 'Aire acondicionado'];
@@ -384,7 +384,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic, 
                           const target = e.currentTarget;
                           if (!target.dataset.fallbackTried) {
                             target.dataset.fallbackTried = 'true';
-                            target.src = '/images/peniscola_coast_1788275771316.jpg';
+                            target.src = '/images/peniscola_balcon_terraza_1788561222890.jpg';
                           } else {
                             target.src = 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80';
                           }

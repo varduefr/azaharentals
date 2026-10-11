@@ -121,10 +121,6 @@ const INITIAL_APARTMENTS: FeaturedApartment[] = [
         caption: 'Salón principal con salida a terraza y vistas al mar en Peñíscola'
       },
       {
-        url: '/images/peniscola_coast_1788275771316.jpg',
-        caption: 'Vistas frontales al mar Mediterráneo y playa de Peñíscola'
-      },
-      {
         url: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80',
         caption: 'Terraza y salón diáfano con iluminación natural'
       },
@@ -375,7 +371,7 @@ export function createApartment(data: Partial<FeaturedApartment>): FeaturedApart
       ? data.photos
       : [
           {
-            url: '/images/peniscola_coast_1788275771316.jpg',
+            url: '/images/peniscola_balcon_terraza_1788561222890.jpg',
             caption: 'Foto de Portada'
           }
         ],
