@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
+import { PlatformsCarouselSection } from '../components/PlatformsCarouselSection';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import { FEATURED_APARTMENTS, FeaturedApartment, ApartmentPhoto } from '../data/featuredApartments';
@@ -1501,6 +1502,11 @@ export const ApartmentsPage: React.FC<ApartmentsPageProps> = ({
                 </a>
               </div>
 
+            </div>
+
+            {/* Platforms Booking & Distribution Carousel (BCN Flat Management style) */}
+            <div className="mt-16">
+              <PlatformsCarouselSection />
             </div>
           </div>
         )}
