@@ -15,10 +15,12 @@ import { FloatingActions } from './components/FloatingActions';
 import { LicenseEligibilityModal } from './components/LicenseEligibilityModal';
 import { SimulatorPage } from './pages/SimulatorPage';
 import { LaundryPage } from './pages/LaundryPage';
+import { ApartmentsPage } from './pages/ApartmentsPage';
 import { AdminView } from './components/admin/AdminView';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'home' | 'simulator' | 'admin' | 'laundry'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'simulator' | 'admin' | 'laundry' | 'apartments'>('home');
+  const [selectedApartmentId, setSelectedApartmentId] = useState<string | null>(null);
   const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
   const [selectedTown, setSelectedTown] = useState('peniscola');
   const [selectedBedrooms, setSelectedBedrooms] = useState(2);
@@ -36,8 +38,14 @@ export default function App() {
         setCurrentPage('admin');
         return;
       }
-      if (pathname === '/laundry' || pathname.startsWith('/laundry')) {
+      if (pathname === '/lavanderia-industrial' || pathname.startsWith('/lavanderia-industrial') || pathname === '/laundry' || pathname.startsWith('/laundry')) {
         setCurrentPage('laundry');
+        return;
+      }
+      if (pathname === '/apartamentos-turisticos-castellon' || pathname.startsWith('/apartamentos-turisticos-castellon') || pathname === '/apartamentos' || pathname.startsWith('/apartamentos')) {
+        setCurrentPage('apartments');
+        const aptId = searchParams.get('id') || searchParams.get('apt');
+        setSelectedApartmentId(aptId);
         return;
       }
       if (pathname === '/simulador' || pathname.startsWith('/simulador') || pathname === '/simulador-rentabilidad') {
@@ -52,8 +60,12 @@ export default function App() {
       // 2. Fallbacks for query params or hash routing
       if (hash === '#/admin' || hash === '#admin' || searchParams.get('page') === 'admin') {
         setCurrentPage('admin');
-      } else if (hash === '#/laundry' || hash === '#laundry' || searchParams.get('page') === 'laundry') {
+      } else if (hash === '#/lavanderia-industrial' || hash === '#lavanderia-industrial' || hash === '#/laundry' || hash === '#laundry' || searchParams.get('page') === 'laundry' || searchParams.get('page') === 'lavanderia-industrial') {
         setCurrentPage('laundry');
+      } else if (hash === '#/apartamentos-turisticos-castellon' || hash === '#apartamentos-turisticos-castellon' || searchParams.get('page') === 'apartamentos' || searchParams.get('page') === 'apartamentos-turisticos-castellon') {
+        setCurrentPage('apartments');
+        const aptId = searchParams.get('id') || searchParams.get('apt');
+        setSelectedApartmentId(aptId);
       } else if (hash === '#/simulador' || hash === '#simulador' || searchParams.get('page') === 'simulador') {
         setCurrentPage('simulator');
         const muni = searchParams.get('muni') || searchParams.get('town');
@@ -93,10 +105,27 @@ export default function App() {
   const navigateToLaundry = () => {
     setCurrentPage('laundry');
     try {
-      window.history.pushState({ page: 'laundry' }, '', '/laundry');
+      window.history.pushState({ page: 'laundry' }, '', '/lavanderia-industrial');
       window.dispatchEvent(new PopStateEvent('popstate'));
     } catch {
-      window.location.hash = '#/laundry';
+      window.location.hash = '#/lavanderia-industrial';
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const navigateToApartments = (apartmentId?: string) => {
+    setSelectedApartmentId(apartmentId || null);
+    setCurrentPage('apartments');
+    try {
+      const targetUrl = apartmentId
+        ? `/apartamentos-turisticos-castellon?id=${encodeURIComponent(apartmentId)}`
+        : '/apartamentos-turisticos-castellon';
+      window.history.pushState({ page: 'apartments', apartmentId }, '', targetUrl);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    } catch {
+      window.location.hash = apartmentId
+        ? `#/apartamentos-turisticos-castellon?id=${encodeURIComponent(apartmentId)}`
+        : '#/apartamentos-turisticos-castellon';
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -179,20 +208,33 @@ export default function App() {
           onNavigateHome={navigateToHome}
           onNavigateToAdmin={navigateToAdmin}
           onNavigateToLaundry={navigateToLaundry}
+          onNavigateToApartments={navigateToApartments}
           onOpenLicenseModal={() => setIsLicenseModalOpen(true)}
           onOpenContact={handleOpenContact}
         />
       ) : currentPage === 'laundry' ? (
-        /* 3. Dedicated Industrial Laundry Page (/laundry) */
+        /* 3. Dedicated Industrial Laundry Page (/lavanderia-industrial) */
         <LaundryPage
           onNavigateHome={navigateToHome}
           onNavigateToSimulator={() => navigateToSimulator()}
+          onNavigateToAdmin={navigateToAdmin}
+          onNavigateToApartments={navigateToApartments}
+          onOpenLicenseModal={() => setIsLicenseModalOpen(true)}
+          onOpenContact={handleOpenContact}
+        />
+      ) : currentPage === 'apartments' ? (
+        /* 4. Dedicated Tourist Apartments Page (/apartamentos-turisticos-castellon) */
+        <ApartmentsPage
+          initialApartmentId={selectedApartmentId}
+          onNavigateHome={navigateToHome}
+          onNavigateToSimulator={() => navigateToSimulator()}
+          onNavigateToLaundry={navigateToLaundry}
           onNavigateToAdmin={navigateToAdmin}
           onOpenLicenseModal={() => setIsLicenseModalOpen(true)}
           onOpenContact={handleOpenContact}
         />
       ) : (
-        /* 4. Main Home Page */
+        /* 5. Main Home Page */
         <>
           {/* Sticky Header / Navbar */}
           <Navbar
@@ -201,6 +243,7 @@ export default function App() {
             onOpenCalculator={() => navigateToSimulator()}
             onNavigateToSimulator={() => navigateToSimulator()}
             onNavigateToLaundry={navigateToLaundry}
+            onNavigateToApartments={navigateToApartments}
             onNavigateToHome={navigateToHome}
             onNavigateToAdmin={navigateToAdmin}
             onOpenContact={() => handleOpenContact()}
@@ -222,8 +265,10 @@ export default function App() {
               onOpenContact={() => handleOpenContact()}
             />
 
-            {/* 3. Featured Vacation Rental Apartments Showcase */}
-            <FeaturedApartmentsSection />
+            {/* 3. Featured Vacation Rental Apartments Showcase - Clicking "Reservar apartamento" opens the new dedicated page */}
+            <FeaturedApartmentsSection 
+              onBookingClick={(apt) => navigateToApartments(apt.id)}
+            />
 
             {/* 4.1 Platforms Booking & Distribution Carousel (BCN Flat Management style) */}
             <PlatformsCarouselSection />
@@ -272,6 +317,7 @@ export default function App() {
             onOpenLicenseModal={() => setIsLicenseModalOpen(true)}
             onOpenSimulator={() => navigateToSimulator()}
             onNavigateToLaundry={navigateToLaundry}
+            onNavigateToApartments={navigateToApartments}
           />
         </>
       )}

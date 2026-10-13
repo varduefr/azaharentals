@@ -395,8 +395,7 @@ export const ApartmentsPage: React.FC<ApartmentsPageProps> = ({
     return calculateBookingStayRate(
       bookingDates.checkIn,
       bookingDates.checkOut,
-      bookingRates,
-      activeApartment.basePricePerNight
+      bookingRates
     );
   }, [activeApartment, bookingDates.checkIn, bookingDates.checkOut, bookingRates]);
 

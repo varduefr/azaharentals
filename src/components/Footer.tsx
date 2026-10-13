@@ -134,7 +134,7 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li>
                 <a 
-                  href="/laundry" 
+                  href="/lavanderia-industrial" 
                   onClick={(e) => {
                     if (onNavigateToLaundry) {
                       e.preventDefault();

@@ -71,7 +71,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   const handleLinkClick = (href: string, e: React.MouseEvent) => {
-    if (href === '/laundry') {
+    if (href === '/lavanderia-industrial' || href === '/laundry') {
       e.preventDefault();
       if (currentPage === 'laundry') {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -81,10 +81,10 @@ export const Navbar: React.FC<NavbarProps> = ({
         onNavigateToLaundry();
       } else {
         try {
-          window.history.pushState({ page: 'laundry' }, '', '/laundry');
+          window.history.pushState({ page: 'laundry' }, '', '/lavanderia-industrial');
           window.dispatchEvent(new PopStateEvent('popstate'));
         } catch {
-          window.location.href = '/laundry';
+          window.location.href = '/lavanderia-industrial';
         }
       }
       return;
@@ -142,7 +142,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const navLinks: { label: string; href: string; badge?: string }[] = [
     { label: 'Apartamentos', href: '/apartamentos-turisticos-castellon' },
     { label: 'Servicios 360°', href: '#servicios' },
-    { label: 'Lavanderia Industrial', href: '/laundry' },
+    { label: 'Lavanderia Industrial', href: '/lavanderia-industrial' },
     { label: 'Licencia Turística', href: '#licencia-turistica' },
     { label: 'Destinos Castellón', href: '#destinos' },
     { label: 'Simulador', href: '/simulador' },

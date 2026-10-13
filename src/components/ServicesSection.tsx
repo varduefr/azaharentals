@@ -201,9 +201,9 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
                     </a>
                   ) : activeService.id === 'cleaning-laundry' ? (
                     <>
-                      {/* Botón de Más Información solicitado que abre /laundry */}
+                      {/* Botón de Más Información solicitado que abre /lavanderia-industrial */}
                       <a
-                        href="/laundry"
+                        href="/lavanderia-industrial"
                         id="btn-service-laundry-more-info"
                         onClick={(e) => {
                           if (onNavigateToLaundry) {

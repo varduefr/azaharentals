@@ -69,7 +69,7 @@ export const SERVICES_DATA: ServiceItem[] = [
       'Inspección de control de calidad previa a cada check-in con checklist fotográfico',
       'Embalaje higiénico termosellado y reposición de amenities ecológicos de primera marca'
     ],
-    badge: 'Lavandería B2B /laundry'
+    badge: 'Lavandería B2B /lavanderia-industrial'
   },
   {
     id: 'maintenance-protection',
