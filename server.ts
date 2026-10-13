@@ -304,13 +304,25 @@ async function startServer() {
   // ==========================================
   // STATIC ASSETS SERVING (IMAGES & PLATFORMS)
   // ==========================================
+  const publicPath = path.join(process.cwd(), 'public');
   const publicImagesPath = path.join(process.cwd(), 'public', 'images');
   const srcAssetsImagesPath = path.join(process.cwd(), 'src', 'assets', 'images');
   const publicPlatformsPath = path.join(process.cwd(), 'public', 'platforms');
 
-  // Serve static images directly from public/images
+  // Explicit handlers for SEO crawlers and search engine indexing
+  app.get('/robots.txt', (req, res) => {
+    res.type('text/plain');
+    res.sendFile(path.join(publicPath, 'robots.txt'));
+  });
+
+  app.get('/sitemap.xml', (req, res) => {
+    res.type('application/xml');
+    res.sendFile(path.join(publicPath, 'sitemap.xml'));
+  });
+
+  // Serve static files from public root, images and platforms
+  app.use(express.static(publicPath));
   app.use('/images', express.static(publicImagesPath, { maxAge: '30d' }));
-  // Serve static platforms icons directly
   app.use('/platforms', express.static(publicPlatformsPath, { maxAge: '30d' }));
 
   // ==========================================

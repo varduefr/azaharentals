@@ -1,0 +1,18 @@
+# robots.txt para Azahar Rentals (https://azaharrentals.com)
+# Gestión de Alojamientos Turísticos y Alquiler Vacacional en Castellón
+
+User-agent: *
+Allow: /
+Allow: /apartamentos-turisticos-castellon
+Allow: /simulador
+Allow: /lavanderia-industrial
+Allow: /images/
+Allow: /platforms/
+
+# Desautorizar panel privado de administración y rutas API
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/
+
+# Ubicación del Sitemap oficial para rastreadores (Google, Bing, Yandex, DuckDuckGo)
+Sitemap: https://azaharrentals.com/sitemap.xml
