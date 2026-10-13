@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import https from 'https';
 import http from 'http';
 import { createServer as createViteServer } from 'vite';
@@ -311,13 +312,31 @@ async function startServer() {
 
   // Explicit handlers for SEO crawlers and search engine indexing
   app.get('/robots.txt', (req, res) => {
-    res.type('text/plain');
-    res.sendFile(path.join(publicPath, 'robots.txt'));
+    const robotsPath = fs.existsSync(path.join(publicPath, 'robots.txt'))
+      ? path.join(publicPath, 'robots.txt')
+      : path.join(process.cwd(), 'dist', 'robots.txt');
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.sendFile(robotsPath, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8'
+      }
+    });
   });
 
   app.get('/sitemap.xml', (req, res) => {
-    res.type('application/xml');
-    res.sendFile(path.join(publicPath, 'sitemap.xml'));
+    const sitemapPath = fs.existsSync(path.join(publicPath, 'sitemap.xml'))
+      ? path.join(publicPath, 'sitemap.xml')
+      : path.join(process.cwd(), 'dist', 'sitemap.xml');
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.sendFile(sitemapPath, {
+      headers: {
+        'Content-Type': 'application/xml; charset=utf-8',
+        'X-Content-Type-Options': 'nosniff'
+      }
+    });
   });
 
   // Serve static files from public root, images and platforms
