@@ -490,7 +490,7 @@ export const ApartmentsPage: React.FC<ApartmentsPageProps> = ({
             "@context": "https://schema.org",
             "@type": "RealEstateAgent",
             "name": "Azahar Rentals - Alquiler Vacacional y Turístico en Castellón",
-            "url": "https://azaharrentals.es/apartamentos-turisticos-castellon",
+            "url": "https://azaharentals.com/apartamentos-turisticos-castellon",
             "telephone": "+34637968999",
             "address": {
               "@type": "PostalAddress",

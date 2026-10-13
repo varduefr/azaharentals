@@ -4,12 +4,12 @@
 
   <!-- 1. Página Principal: Gestión de Alojamientos Turísticos y Alquiler Vacacional en Castellón -->
   <url>
-    <loc>https://azaharrentals.com/</loc>
+    <loc>https://azaharentals.com/</loc>
     <lastmod>2026-10-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
-      <image:loc>https://azaharrentals.com/images/castellon_hero_1788275752376.jpg</image:loc>
+      <image:loc>https://azaharentals.com/images/castellon_hero_1788275752376.jpg</image:loc>
       <image:title>Gestión de Alojamientos Turísticos en Castellón - Azahar Rentals</image:title>
       <image:caption>Servicio integral de gestión de alquiler vacacional y licencias turísticas en la Costa de Castellón</image:caption>
     </image:image>
@@ -17,27 +17,27 @@
 
   <!-- 2. Catálogo Oficial: Apartamentos Turísticos y Vacacionales en la Costa de Castellón -->
   <url>
-    <loc>https://azaharrentals.com/apartamentos-turisticos-castellon</loc>
+    <loc>https://azaharentals.com/apartamentos-turisticos-castellon</loc>
     <lastmod>2026-10-13</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
     <image:image>
-      <image:loc>https://azaharrentals.com/images/peniscola_balcon_terraza_1788561222890.jpg</image:loc>
+      <image:loc>https://azaharentals.com/images/peniscola_balcon_terraza_1788561222890.jpg</image:loc>
       <image:title>Ático Mirador del Castillo en Peñíscola - VT-42819-CS</image:title>
       <image:caption>Apartamento turístico en primera línea de playa con terraza y vistas al Castillo Papa Luna</image:caption>
     </image:image>
     <image:image>
-      <image:loc>https://azaharrentals.com/images/benicarlo_marina_apt_1788444573430.jpg</image:loc>
+      <image:loc>https://azaharentals.com/images/benicarlo_marina_apt_1788444573430.jpg</image:loc>
       <image:title>Residencial Marina y Puerto Deportivo en Benicarló - VT-43180-CS</image:title>
       <image:caption>Alojamiento turístico con piscina comunitaria junto a la playa Morrongo</image:caption>
     </image:image>
     <image:image>
-      <image:loc>https://azaharrentals.com/images/benicarlo_morrongo_suite_1788444588447.jpg</image:loc>
+      <image:loc>https://azaharentals.com/images/benicarlo_morrongo_suite_1788444588447.jpg</image:loc>
       <image:title>Brisas del Morrongo y Costa Papa Luna en Benicarló - VT-43612-CS</image:title>
       <image:caption>Apartamento vacacional en primera línea con terraza chill-out y piscina</image:caption>
     </image:image>
     <image:image>
-      <image:loc>https://azaharrentals.com/images/alcover_rural_retreat_1788444605887.jpg</image:loc>
+      <image:loc>https://azaharentals.com/images/alcover_rural_retreat_1788444605887.jpg</image:loc>
       <image:title>Villa Rural y Vistas de Alcover - HUT-029415</image:title>
       <image:caption>Alojamiento rústico con encanto en las montañas y valle del Glorieta</image:caption>
     </image:image>
@@ -45,7 +45,7 @@
 
   <!-- 3. Herramienta para Propietarios: Simulador de Rentabilidad e Ingresos Anuales -->
   <url>
-    <loc>https://azaharrentals.com/simulador</loc>
+    <loc>https://azaharentals.com/simulador</loc>
     <lastmod>2026-10-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -53,7 +53,7 @@
 
   <!-- 4. Servicio B2B: Lavandería Industrial para Hoteles, Pisos Turísticos y Clínicas -->
   <url>
-    <loc>https://azaharrentals.com/lavanderia-industrial</loc>
+    <loc>https://azaharentals.com/lavanderia-industrial</loc>
     <lastmod>2026-10-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>

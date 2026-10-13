@@ -134,7 +134,7 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
             "@context": "https://schema.org",
             "@type": "DryCleaningOrLaundry",
             "name": "Azahar Rentals - Servicio de Lavandería Industrial",
-            "image": "https://azaharrentals.es/images/industrial_laundry.jpg",
+            "image": "https://azaharentals.com/images/industrial_laundry.jpg",
             "telephone": "+34637968999",
             "address": {
               "@type": "PostalAddress",
