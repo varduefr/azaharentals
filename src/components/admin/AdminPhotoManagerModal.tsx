@@ -43,7 +43,7 @@ export const AdminPhotoManagerModal: React.FC<AdminPhotoManagerModalProps> = ({
     const fileArray = Array.from(files);
     const readPromises = fileArray.map(async (file, i) => {
       const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
-      const optimizedUrl = await compressImageToDataUrl(file, 1200, 0.82);
+      const optimizedUrl = await compressImageToDataUrl(file, 1080, 0.72);
       return {
         url: optimizedUrl,
         caption: cleanName || `Foto ${photos.length + i + 1}`

@@ -252,43 +252,45 @@ const INITIAL_APARTMENTS: FeaturedApartment[] = [
   },
   {
     id: 'apt-alcover-rural',
-    name: 'Villa Mediterránea Costa Norte',
-    town: 'Vinaròs',
-    zone: 'Calas Costa Norte / Vinaròs',
-    licenseNumber: 'VT-44180-CS',
-    rating: 4.95,
-    reviewsCount: 22,
-    basePricePerNight: 110,
+    name: 'Villa Rural & Vistas de Alcover',
+    town: 'Alcover',
+    zone: 'Centro Histórico / Valle del Glorieta & Prades',
+    licenseNumber: 'HUT-029415',
+    rating: 4.96,
+    reviewsCount: 31,
+    basePricePerNight: 64,
     bookingIcalUrl: '',
-    maxGuests: 8,
-    bedrooms: 4,
+    maxGuests: 6,
+    bedrooms: 3,
     bathrooms: 2,
-    squareMeters: 140,
+    squareMeters: 105,
     isFirstLineBeach: false,
-    distanceToBeach: '120m de Cala Puntal y senderos',
+    distanceToBeach: 'Entorno de Montaña y Pozas Naturales (a 20 min de la costa)',
     highlights: [
-      'Chalet independiente con jardín privado vallado y barbacoa',
-      'Entorno natural de aguas cristalinas y tranquilidad absoluta',
-      'Amplia terraza porche para cenas al aire libre bajo las estrellas',
-      'Admite mascotas educadas previa consulta'
+      'Paredes de piedra vista restauradas y techos de vigas de madera',
+      'Mirador privado con vistas panorámicas a las montañas de Prades',
+      'A minutos del valle del río Glorieta y sus famosas pozas naturales ("Nius")',
+      'Cocina rústica contemporánea con chimenea de pellet y barbacoa exterior',
+      'Máxima tranquilidad, senderismo de montaña y rutas de cicloturismo'
     ],
     amenities: [
-      'Parking privado',
-      'Cafetera de goteo',
-      'Wifi',
+      'Wifi alta velocidad',
       'Barbacoa',
-      'Jardín privado',
-      'Admite mascotas'
+      'Chimenea',
+      'Terraza exterior',
+      'Vistas a la montaña',
+      'Cafetera Nespresso',
+      'Parking privado'
     ],
-    description: 'Chalet con encanto mediterráneo en la apacible Costa Norte de Vinaròs. Rodeado de calas vírgenes, jardín privado con barbacoa para desconectar en familia.',
+    description: 'Encantador alojamiento vacacional de estilo rústico-contemporáneo en Alcover. Combina la calidez de la arquitectura tradicional catalana con todas las comodidades modernas, en un entorno idílico entre las montañas de Prades y a corta distancia de la costa.',
     photos: [
       {
         url: '/images/alcover_rural_retreat_1788444605887.jpg',
-        caption: 'Porche exterior y jardín mediterráneo privado con zona barbacoa'
+        caption: 'Salón con piedra vista y grandes ventanales con vistas a la naturaleza de Alcover'
       },
       {
         url: 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=1200&q=80',
-        caption: 'Terraza rústica exterior para cenas al aire libre con aire puro de mar y campo'
+        caption: 'Terraza rústica exterior para cenas al aire libre con aire puro de montaña'
       },
       {
         url: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1200&q=80',

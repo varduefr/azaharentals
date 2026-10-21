@@ -10,11 +10,20 @@ import {
   onSnapshot,
   Unsubscribe 
 } from 'firebase/firestore';
+import { 
+  saveApartmentsToIndexedDb, 
+  getApartmentsFromIndexedDb, 
+  saveSingleApartmentToIndexedDb 
+} from '../utils/localApartmentDb';
 
 const TOKEN_KEY = 'azahar_admin_token';
 const USER_KEY = 'azahar_admin_user';
 const LOCAL_CREDENTIALS_KEY = 'azahar_custom_admin_creds';
 const LOCAL_APARTMENTS_KEY = 'azahar_apartments_data';
+
+// Fast in-memory cache to guarantee instantaneous synchronous UI renders
+let cachedApartments: FeaturedApartment[] | null = null;
+let idbHydrationStarted = false;
 
 export interface AdminCredentials {
   username: string;
@@ -108,24 +117,66 @@ export function sortApartments(list: FeaturedApartment[]): FeaturedApartment[] {
 }
 
 export function getLocalApartments(): FeaturedApartment[] {
+  if (cachedApartments && cachedApartments.length > 0) {
+    return cachedApartments;
+  }
+
+  // Hydrate asynchronously from IndexedDB if not already running
+  if (typeof window !== 'undefined' && !idbHydrationStarted) {
+    idbHydrationStarted = true;
+    getApartmentsFromIndexedDb().then((idbList) => {
+      if (idbList && idbList.length > 0) {
+        cachedApartments = sortApartments(idbList);
+        window.dispatchEvent(new CustomEvent('azahar_apartments_updated', { detail: idbList }));
+      }
+    }).catch(() => {});
+  }
+
   try {
     const raw = localStorage.getItem(LOCAL_APARTMENTS_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return sortApartments(parsed);
+        const sorted = sortApartments(parsed);
+        cachedApartments = sorted;
+        return sorted;
       }
     }
   } catch (e) {
     console.warn('Error reading local apartments:', e);
   }
-  return sortApartments(FEATURED_APARTMENTS);
+
+  const initial = sortApartments(FEATURED_APARTMENTS);
+  cachedApartments = initial;
+  return initial;
 }
 
 export function saveLocalApartments(apartments: FeaturedApartment[]): void {
   try {
     const sorted = sortApartments(apartments);
-    localStorage.setItem(LOCAL_APARTMENTS_KEY, JSON.stringify(sorted));
+    cachedApartments = sorted;
+
+    // 1. Save full data with all high-resolution photos to IndexedDB (virtually unlimited quota)
+    if (typeof window !== 'undefined') {
+      saveApartmentsToIndexedDb(sorted).catch((err) => {
+        console.warn('Could not persist to IndexedDB:', err);
+      });
+    }
+
+    // 2. Save a sanitized copy to localStorage without heavy base64 strings to prevent QuotaExceededError
+    try {
+      const safeForLocalStorage = sorted.map((apt) => ({
+        ...apt,
+        photos: (apt.photos || []).map((p) => ({
+          caption: p.caption || '',
+          url: (p.url || '').startsWith('data:') ? '' : p.url
+        }))
+      }));
+      localStorage.setItem(LOCAL_APARTMENTS_KEY, JSON.stringify(safeForLocalStorage));
+    } catch (quotaErr) {
+      // Quota exceeded is safely swallowed because IndexedDB has the full payload
+      console.warn('localStorage quota reached, relying on IndexedDB:', quotaErr);
+    }
   } catch (e) {
     console.error('Error saving local apartments:', e);
   }
@@ -179,7 +230,7 @@ export function clearStoredAdminSession(): void {
 async function saveApartmentPhotosSubcollection(apartmentId: string, photos: ApartmentPhoto[]): Promise<void> {
   const colRef = collection(db, 'apartments', apartmentId, 'photos');
 
-  // Save each individual photo as its own document (~40KB - 80KB)
+  // Save each individual photo as its own document in the subcollection
   for (let i = 0; i < photos.length; i++) {
     const p = photos[i];
     const photoDocRef = doc(db, 'apartments', apartmentId, 'photos', `photo_${i}`);
@@ -191,12 +242,13 @@ async function saveApartmentPhotosSubcollection(apartmentId: string, photos: Apa
     });
   }
 
-  // Cleanup removed photos if count decreased
+  // Cleanup removed excess photo documents if count decreased
   try {
     const snap = await getDocs(colRef);
     for (const d of snap.docs) {
-      const idx = d.data().index;
-      if (typeof idx === 'number' && idx >= photos.length) {
+      const data = d.data();
+      const idx = typeof data.index === 'number' ? data.index : parseInt(d.id.replace('photo_', ''), 10);
+      if (!isNaN(idx) && idx >= photos.length) {
         await deleteDoc(doc(db, 'apartments', apartmentId, 'photos', d.id));
       }
     }
@@ -206,26 +258,39 @@ async function saveApartmentPhotosSubcollection(apartmentId: string, photos: Apa
 }
 
 /**
- * Loads all photos from the subcollection, falling back to embedded photos or seed
+ * Loads all photos from the subcollection. Returns empty array if none found.
  */
-async function loadApartmentPhotosSubcollection(apartmentId: string, fallbackPhotos: ApartmentPhoto[] = []): Promise<ApartmentPhoto[]> {
+async function loadApartmentPhotosSubcollection(apartmentId: string): Promise<ApartmentPhoto[]> {
   try {
     const colRef = collection(db, 'apartments', apartmentId, 'photos');
     const snap = await getDocs(colRef);
     if (!snap.empty) {
       const sorted = snap.docs
-        .map((d) => d.data() as { index: number; url: string; caption: string })
-        .sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
-      return sorted.map((p) => ({ url: p.url, caption: p.caption || '' }));
+        .map((d) => {
+          const data = d.data() as { index?: number; url: string; caption?: string };
+          const idx = typeof data.index === 'number' ? data.index : parseInt(d.id.replace('photo_', ''), 10);
+          return {
+            index: isNaN(idx) ? 0 : idx,
+            url: data.url || '',
+            caption: data.caption || ''
+          };
+        })
+        .filter((p) => p.url && p.url.trim().length > 0)
+        .sort((a, b) => a.index - b.index);
+
+      if (sorted.length > 0) {
+        return sorted.map((p) => ({ url: p.url, caption: p.caption }));
+      }
     }
   } catch (err) {
     console.warn(`Could not read photos subcollection for ${apartmentId}:`, err);
   }
-  return fallbackPhotos;
+  return [];
 }
 
 /**
- * Fetch all apartments from backend API and Cloud Firestore database with photos.
+ * Fetch all apartments from Cloud Firestore database and backend API with photos.
+ * Always treats the photos subcollection as the primary source of truth for photo galleries.
  */
 export async function fetchApartments(): Promise<FeaturedApartment[]> {
   // 1. Intentar cargar desde el backend Express /api/apartments (persistencia en data/apartments.json)
@@ -250,20 +315,24 @@ export async function fetchApartments(): Promise<FeaturedApartment[]> {
     if (!snapshot.empty) {
       const list = await Promise.all(snapshot.docs.map(async (d) => {
         const raw = d.data() as FeaturedApartment;
-        let photos = Array.isArray(raw.photos) && raw.photos.length > 0 ? raw.photos : [];
-        if (photos.length === 0) {
-          const loadedPhotos = await loadApartmentPhotosSubcollection(d.id, []);
-          if (loadedPhotos.length > 0) {
-            photos = loadedPhotos;
-          }
-        }
-        // Si no hay fotos en Firestore, consultar el backend server o fallback de catálogo
+        
+        // 1. Cargar fotos desde la subcolección de fotos de Firestore (FUENTE DE VERDAD)
+        const subcollectionPhotos = await loadApartmentPhotosSubcollection(d.id);
+        
+        let photos = subcollectionPhotos.length > 0 ? subcollectionPhotos : [];
+
+        // 2. Si la subcolección aún no tiene fotos, comprobar backend server o fotos de catálogo inicial
         if (photos.length === 0) {
           const fromServer = serverList?.find((a) => a.id === d.id);
-          photos = fromServer?.photos?.length 
-            ? fromServer.photos 
-            : (FEATURED_APARTMENTS.find((a) => a.id === d.id)?.photos || []);
+          if (fromServer?.photos && fromServer.photos.length > 0) {
+            photos = fromServer.photos;
+          } else if (Array.isArray(raw.photos) && raw.photos.length > 0 && raw.photos.some(p => p.url)) {
+            photos = raw.photos.filter(p => p.url);
+          } else {
+            photos = FEATURED_APARTMENTS.find((a) => a.id === d.id)?.photos || [];
+          }
         }
+
         return sanitizeApartmentPhotos({
           ...raw,
           id: d.id,
@@ -282,12 +351,13 @@ export async function fetchApartments(): Promise<FeaturedApartment[]> {
       return serverList;
     }
 
-    // Sembrar catálogo inicial limpio en Cloud Firestore
+    // Sembrar catálogo inicial limpio en Cloud Firestore si está completamente vacío
     console.log('Sembrando catálogo inicial de Azahar Rentals en Cloud Firestore...');
     const initialSorted = sortApartments(FEATURED_APARTMENTS);
     for (const apt of initialSorted) {
+      const { photos, ...aptWithoutPhotos } = apt;
       await setDoc(doc(db, 'apartments', apt.id), {
-        ...apt,
+        ...aptWithoutPhotos,
         photosCount: apt.photos?.length || 0,
         coverPhoto: apt.photos?.[0]?.url || '',
         updatedAt: new Date().toISOString()
@@ -310,6 +380,14 @@ export async function fetchApartments(): Promise<FeaturedApartment[]> {
       saveLocalApartments(serverList);
       return serverList;
     }
+
+    const fromIdb = await getApartmentsFromIndexedDb();
+    if (fromIdb && fromIdb.length > 0) {
+      const sorted = sortApartments(fromIdb);
+      saveLocalApartments(sorted);
+      return sorted;
+    }
+
     return getLocalApartments();
   }
 }
@@ -328,12 +406,10 @@ export function subscribeApartments(onUpdate: (apartments: FeaturedApartment[]) 
           if (!snapshot.empty) {
             const list = await Promise.all(snapshot.docs.map(async (d) => {
               const raw = d.data() as FeaturedApartment;
-              let photos = Array.isArray(raw.photos) && raw.photos.length > 0 ? raw.photos : [];
-              if (photos.length === 0) {
-                const loadedPhotos = await loadApartmentPhotosSubcollection(d.id, []);
-                if (loadedPhotos.length > 0) {
-                  photos = loadedPhotos;
-                }
+              const subcollectionPhotos = await loadApartmentPhotosSubcollection(d.id);
+              let photos = subcollectionPhotos.length > 0 ? subcollectionPhotos : [];
+              if (photos.length === 0 && Array.isArray(raw.photos) && raw.photos.length > 0 && raw.photos.some(p => p.url)) {
+                photos = raw.photos.filter(p => p.url);
               }
               if (photos.length === 0) {
                 photos = FEATURED_APARTMENTS.find((a) => a.id === d.id)?.photos || [];
@@ -408,8 +484,16 @@ export async function createApartmentApi(data: Partial<FeaturedApartment>): Prom
       await saveApartmentPhotosSubcollection(id, newApt.photos);
     }
 
+    const { photos, ...docDataWithoutPhotos } = newApt;
+    const safePhotosList = (photos || []).map((p, idx) => ({
+      index: idx,
+      caption: p.caption || '',
+      url: (p.url || '').startsWith('data:') ? '' : p.url
+    }));
+
     await setDoc(doc(db, 'apartments', id), {
-      ...newApt,
+      ...docDataWithoutPhotos,
+      photos: safePhotosList,
       photosCount: newApt.photos.length,
       coverPhoto: newApt.photos[0]?.url || '',
       updatedAt: new Date().toISOString()
@@ -421,10 +505,12 @@ export async function createApartmentApi(data: Partial<FeaturedApartment>): Prom
     } catch {}
   }
 
-  // 3. Actualizar caché local
+  // 3. Actualizar caché local e IndexedDB
   const current = getLocalApartments();
   const updated = [newApt, ...current.filter((a) => a.id !== id)];
   saveLocalApartments(updated);
+  await saveSingleApartmentToIndexedDb(newApt);
+
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('azahar_apartments_updated', { detail: newApt }));
   }
@@ -456,16 +542,32 @@ export async function updateApartmentApi(id: string, data: Partial<FeaturedApart
     console.warn('Backend API updateApartment sync:', apiErr);
   }
 
-  // 2. Sincronizar con Cloud Firestore
-  try {
-    if (updatedApt.photos && Array.isArray(updatedApt.photos)) {
+  // 2. Sincronizar fotos en Cloud Firestore Subcollection
+  if (updatedApt.photos && Array.isArray(updatedApt.photos)) {
+    try {
       await saveApartmentPhotosSubcollection(id, updatedApt.photos);
+    } catch (photoErr) {
+      console.error('Error saving photos subcollection to Firestore:', photoErr);
     }
+  }
+
+  // 3. Sincronizar el documento principal del apartamento en Cloud Firestore
+  // Se excluyen las cadenas pesadas base64 del documento padre para evitar el error de 1MB de Firestore
+  try {
+    const { photos, ...docDataWithoutPhotos } = updatedApt;
+
+    const safePhotosList = (photos || []).map((p, idx) => ({
+      index: idx,
+      caption: p.caption || '',
+      url: (p.url || '').startsWith('data:') ? '' : p.url
+    }));
 
     await setDoc(doc(db, 'apartments', id), {
-      ...updatedApt,
+      ...docDataWithoutPhotos,
+      photos: safePhotosList,
       photosCount: updatedApt.photos?.length || 0,
       coverPhoto: updatedApt.photos?.[0]?.url || '',
+      hasCustomPhotos: true,
       updatedAt: new Date().toISOString()
     }, { merge: true });
   } catch (err) {
@@ -475,9 +577,10 @@ export async function updateApartmentApi(id: string, data: Partial<FeaturedApart
     } catch {}
   }
 
-  // 3. Sincronizar con caché local
+  // 4. Sincronizar con IndexedDB y caché local
   const updatedList = current.map((a) => (a.id === id ? updatedApt : a));
   saveLocalApartments(updatedList);
+  await saveSingleApartmentToIndexedDb(updatedApt);
 
   // Si es Peñíscola, sincronizar también la clave legacy peniscola_custom_photos
   if (id === 'apt-peniscola-primero') {
