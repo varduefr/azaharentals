@@ -38,6 +38,7 @@ import { AdminAmenitiesModal } from './AdminAmenitiesModal';
 import { AdminIcalModal } from './AdminIcalModal';
 import { AdminRatesModal } from './AdminRatesModal';
 import { AdminChangePasswordModal } from './AdminChangePasswordModal';
+import { AdminBrandKitModal } from './AdminBrandKitModal';
 
 interface AdminDashboardProps {
   onBackToPublic: () => void;
@@ -67,6 +68,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic, 
   const [apartmentForRates, setApartmentForRates] = useState<FeaturedApartment | null>(null);
 
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isBrandKitOpen, setIsBrandKitOpen] = useState(false);
 
   // Global notification banner inside admin
   const [alertNotice, setAlertNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -181,6 +183,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic, 
           >
             <Eye className="w-3.5 h-3.5 text-cyan-400" />
             <span className="hidden sm:inline">Ver Web Pública</span>
+          </button>
+
+          {/* Descargar Logo / Brand Assets */}
+          <button
+            onClick={() => setIsBrandKitOpen(true)}
+            id="btn-admin-brand-kit"
+            title="Descargar logos y recursos oficiales de marca"
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700 cursor-pointer shadow-xs"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden sm:inline">Descargar Logo</span>
           </button>
 
           {/* New Apartment Button (+) */}
@@ -673,6 +686,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic, 
             });
             setTimeout(() => setAlertNotice(null), 4000);
           }}
+        />
+      )}
+
+      {isBrandKitOpen && (
+        <AdminBrandKitModal
+          isOpen={isBrandKitOpen}
+          onClose={() => setIsBrandKitOpen(false)}
         />
       )}
 

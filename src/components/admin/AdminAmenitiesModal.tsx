@@ -28,6 +28,8 @@ interface AdminAmenitiesModalProps {
 
 // Predefined catalog of popular hospitality amenities
 const SUGGESTED_AMENITIES = [
+  'Piscina Privada',
+  'Piscina comunitaria',
   'Primera línea de playa (25m)',
   'Parking privado',
   'Cafetera Nespresso',
@@ -35,7 +37,6 @@ const SUGGESTED_AMENITIES = [
   'Cafetera Dolce Gusto',
   'Wifi 600Mb',
   'Aire acondicionado',
-  'Piscina comunitaria',
   'Vistas al mar',
   'Terraza exterior',
   'Ascensor',
@@ -231,6 +232,7 @@ export const AdminAmenitiesModal: React.FC<AdminAmenitiesModalProps> = ({
             <div className="flex flex-wrap gap-1.5">
               {SUGGESTED_AMENITIES.map((sugg) => {
                 const isSelected = amenities.includes(sugg);
+                const isPool = sugg.toLowerCase().includes('piscina');
                 return (
                   <button
                     type="button"
@@ -238,12 +240,25 @@ export const AdminAmenitiesModal: React.FC<AdminAmenitiesModalProps> = ({
                     onClick={() => handleToggleSuggested(sugg)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all flex items-center gap-1.5 cursor-pointer ${
                       isSelected
-                        ? 'bg-cyan-500/20 border-cyan-500 text-cyan-300'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                        ? isPool
+                          ? 'bg-cyan-500/25 border-cyan-400 text-cyan-200 shadow-sm'
+                          : 'bg-cyan-500/20 border-cyan-500 text-cyan-300'
+                        : isPool
+                          ? 'bg-slate-950 border-cyan-800/40 text-cyan-400 hover:text-cyan-200 hover:border-cyan-600'
+                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
                     }`}
                   >
-                    {isSelected ? <Check className="w-3.5 h-3.5 text-cyan-400" /> : <Plus className="w-3.5 h-3.5 text-slate-500" />}
+                    {isPool ? (
+                      <Waves className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                    ) : isSelected ? (
+                      <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                    ) : (
+                      <Plus className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                    )}
                     <span>{sugg}</span>
+                    {isPool && isSelected && (
+                      <Check className="w-3 h-3 text-cyan-400 shrink-0" />
+                    )}
                   </button>
                 );
               })}

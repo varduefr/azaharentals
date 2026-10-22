@@ -5,7 +5,6 @@ import {
   ShieldCheck, 
   Menu, 
   X, 
-  Calculator, 
   Sparkles, 
   Award, 
   ChevronRight, 
@@ -285,7 +284,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={handleGoToLicenseSection}
               id="btn-nav-license"
               aria-label="Ir a la sección Servicio Exclusivo Llave en Mano para pedir Licencia Turística"
-              className={`text-xs font-semibold px-3.5 py-2.5 ${currentTheme.buttonRadius} border transition-all flex items-center gap-1.5 cursor-pointer hover:shadow-xs`}
+              className={`text-xs font-semibold px-4 py-2.5 ${currentTheme.buttonRadius} border transition-all flex items-center gap-1.5 cursor-pointer hover:shadow-xs hover:translate-y-[-1px]`}
               style={{
                 backgroundColor: currentTheme.colors.primaryLight,
                 borderColor: currentTheme.colors.primaryBorder,
@@ -294,30 +293,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Award className="w-4 h-4" />
               <span>Pedir Licencia Turística</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                if (currentPage === 'simulator') {
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                  return;
-                }
-                if (onNavigateToSimulator) {
-                  onNavigateToSimulator();
-                } else {
-                  onOpenCalculator();
-                }
-              }}
-              id="btn-nav-calculator"
-              aria-label="Abrir Simulador de Rentabilidad e Ingresos"
-              className={`text-xs font-bold px-4 py-2.5 ${currentTheme.buttonRadius} text-white shadow-sm transition-all flex items-center gap-2 hover:translate-y-[-1px] cursor-pointer`}
-              style={{
-                backgroundColor: currentTheme.colors.primary
-              }}
-            >
-              <Calculator className="w-4 h-4" />
-              <span>Calcular Ingresos</span>
             </button>
           </div>
 
@@ -383,25 +358,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <Award className="w-4 h-4" />
                 <span>Pedir Licencia Turística</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  if (onNavigateToSimulator) {
-                    onNavigateToSimulator();
-                  } else {
-                    onOpenCalculator();
-                  }
-                }}
-                className="w-full text-center text-sm font-bold py-2.5 px-4 rounded-lg text-white shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                style={{
-                  backgroundColor: currentTheme.colors.primary
-                }}
-              >
-                <Calculator className="w-4 h-4" />
-                <span>Calcular Ingresos</span>
               </button>
             </div>
           </div>

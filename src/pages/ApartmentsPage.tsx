@@ -90,6 +90,7 @@ const getAmenityIcon = (amenity: string) => {
   if (lower.includes('aire') || lower.includes('clima') || lower.includes('ac')) return <Wind className="w-3.5 h-3.5 text-cyan-400 shrink-0" />;
   if (lower.includes('park') || lower.includes('gara') || lower.includes('coche')) return <Car className="w-3.5 h-3.5 text-cyan-400 shrink-0" />;
   if (lower.includes('cafe') || lower.includes('nespresso')) return <Coffee className="w-3.5 h-3.5 text-cyan-400 shrink-0" />;
+  if (lower.includes('piscina privada')) return <Waves className="w-3.5 h-3.5 text-cyan-300 shrink-0" />;
   if (lower.includes('piscina') || lower.includes('mar') || lower.includes('playa') || lower.includes('vistas')) return <Waves className="w-3.5 h-3.5 text-cyan-400 shrink-0" />;
   if (lower.includes('tv') || lower.includes('television') || lower.includes('smart')) return <Tv className="w-3.5 h-3.5 text-cyan-400 shrink-0" />;
   if (lower.includes('cocina') || lower.includes('lavavajillas') || lower.includes('horno')) return <Utensils className="w-3.5 h-3.5 text-cyan-400 shrink-0" />;
@@ -786,15 +787,22 @@ export const ApartmentsPage: React.FC<ApartmentsPageProps> = ({
                                 </span>
                               </div>
                               <div className="flex flex-wrap gap-2">
-                                {uniqueList.map((amenity, aIdx) => (
-                                  <span
-                                    key={aIdx}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900/90 border border-slate-700/90 text-slate-200 hover:border-cyan-500/40 shadow-2xs transition-colors"
-                                  >
-                                    {getAmenityIcon(amenity)}
-                                    <span>{amenity}</span>
-                                  </span>
-                                ))}
+                                {uniqueList.map((amenity, aIdx) => {
+                                  const isPrivPool = amenity.toLowerCase().includes('piscina privada');
+                                  return (
+                                    <span
+                                      key={aIdx}
+                                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium shadow-2xs transition-colors ${
+                                        isPrivPool
+                                          ? 'bg-cyan-950/80 border border-cyan-500/60 text-cyan-200 ring-1 ring-cyan-500/30 font-semibold'
+                                          : 'bg-slate-900/90 border border-slate-700/90 text-slate-200 hover:border-cyan-500/40'
+                                      }`}
+                                    >
+                                      {getAmenityIcon(amenity)}
+                                      <span>{amenity}</span>
+                                    </span>
+                                  );
+                                })}
                               </div>
                             </div>
                           );
@@ -1403,23 +1411,42 @@ export const ApartmentsPage: React.FC<ApartmentsPageProps> = ({
                           </p>
 
                           {/* Amenities Badges */}
-                          {apt.amenities && apt.amenities.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mb-3">
-                              {apt.amenities.slice(0, 3).map((amenity, idx) => (
-                                <span
-                                  key={idx}
-                                  className="px-2 py-0.5 rounded-md bg-slate-900/90 border border-slate-700/70 text-[10px] text-cyan-200 font-medium"
-                                >
-                                  {amenity}
-                                </span>
-                              ))}
-                              {apt.amenities.length > 3 && (
-                                <span className="px-1.5 py-0.5 rounded-md bg-slate-900/60 border border-slate-800 text-[10px] text-slate-400">
-                                  +{apt.amenities.length - 3}
-                                </span>
-                              )}
-                            </div>
-                          )}
+                          {apt.amenities && apt.amenities.length > 0 && (() => {
+                            const sortedBadges = [...apt.amenities].sort((a, b) => {
+                              const aLower = a.toLowerCase();
+                              const bLower = b.toLowerCase();
+                              if (aLower.includes('piscina privada')) return -1;
+                              if (bLower.includes('piscina privada')) return 1;
+                              if (aLower.includes('primera')) return -1;
+                              if (bLower.includes('primera')) return 1;
+                              return 0;
+                            });
+                            return (
+                              <div className="flex flex-wrap gap-1 mb-3">
+                                {sortedBadges.slice(0, 3).map((amenity, idx) => {
+                                  const isPrivPool = amenity.toLowerCase().includes('piscina privada');
+                                  return (
+                                    <span
+                                      key={idx}
+                                      className={`px-2 py-0.5 rounded-md text-[10px] font-medium flex items-center gap-1 ${
+                                        isPrivPool
+                                          ? 'bg-cyan-950/90 border border-cyan-500/70 text-cyan-300 shadow-2xs font-semibold'
+                                          : 'bg-slate-900/90 border border-slate-700/70 text-cyan-200'
+                                      }`}
+                                    >
+                                      {isPrivPool && <Waves className="w-2.5 h-2.5 text-cyan-400 shrink-0" />}
+                                      <span>{amenity}</span>
+                                    </span>
+                                  );
+                                })}
+                                {sortedBadges.length > 3 && (
+                                  <span className="px-1.5 py-0.5 rounded-md bg-slate-900/60 border border-slate-800 text-[10px] text-slate-400">
+                                    +{sortedBadges.length - 3}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
 
                           {/* Specs Grid */}
                           <div className="grid grid-cols-3 gap-1.5 py-2 border-y border-slate-700/60 text-center mb-3 text-[11px] text-slate-300">
