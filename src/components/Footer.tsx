@@ -215,19 +215,11 @@ export const Footer: React.FC<FooterProps> = ({
             © {new Date().getFullYear()} Azahar Rentals S.L. Todos los derechos reservados.
           </div>
 
-          <div className="flex flex-wrap items-center gap-6">
+          <div className="flex items-center gap-6">
             <a href="#" className="hover:text-slate-400">Aviso Legal</a>
             <a href="#" className="hover:text-slate-400">Política de Privacidad</a>
             <a href="#" className="hover:text-slate-400">Política de Cookies</a>
             <a href="#" className="hover:text-slate-400">Normativa GVA</a>
-            <a 
-              href="/azahar-rentals-logo.svg" 
-              download="azahar-rentals-logo.svg" 
-              className="text-cyan-400/90 hover:text-cyan-300 transition-colors font-medium"
-              title="Descargar logotipo oficial en formato vectorial SVG de alta calidad"
-            >
-              Logo Oficial (SVG)
-            </a>
           </div>
         </div>
 
