@@ -42,6 +42,7 @@ import { Footer } from '../components/Footer';
 import { PlatformsCarouselSection } from '../components/PlatformsCarouselSection';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
+import { updatePageSeo } from '../utils/seo';
 import { FEATURED_APARTMENTS, FeaturedApartment, ApartmentPhoto } from '../data/featuredApartments';
 import { 
   fetchApartments, 
@@ -182,23 +183,20 @@ export const ApartmentsPage: React.FC<ApartmentsPageProps> = ({
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    const originalTitle = document.title;
-    document.title = "Apartamentos Turísticos en Castellón | Alquiler Vacacional Verificado | Azahar Rentals";
-
-    const metaDesc = document.querySelector('meta[name="description"]');
-    const originalDesc = metaDesc ? metaDesc.getAttribute('content') : '';
-    if (metaDesc) {
-      metaDesc.setAttribute(
-        'content',
-        'Reserva los mejores apartamentos turísticos y vacacionales en la Costa de Castellón: Peñíscola, Benicarló y Alcover. Con licencias turísticas oficiales VT, check-in 24/7 y limpieza profesional hotelera.'
-      );
-    }
+    updatePageSeo({
+      title: "Apartamentos Turísticos en Castellón | Alquiler Vacacional Verificado | Azahar Rentals",
+      description: "Reserva los mejores apartamentos turísticos y vacacionales en la Costa de Castellón: Peñíscola, Benicarló y Alcover. Con licencias turísticas oficiales VT, check-in 24/7 y limpieza profesional hotelera.",
+      path: "/apartamentos-turisticos-castellon",
+      image: "https://www.azaharentals.com/images/peniscola_balcon_terraza_1788561222890.jpg"
+    });
 
     return () => {
-      document.title = originalTitle;
-      if (metaDesc && originalDesc) {
-        metaDesc.setAttribute('content', originalDesc);
-      }
+      updatePageSeo({
+        title: "Gestión de Alojamientos Turísticos en Castellón | Azahar",
+        description: "Gestión integral de alquiler vacacional y alojamientos turísticos en Castellón. Maximizamos la rentabilidad para propietarios y tramitamos tu licencia.",
+        path: "/",
+        image: "https://www.azaharentals.com/images/castellon_hero_1788275752376.jpg"
+      });
     };
   }, []);
 
@@ -491,7 +489,7 @@ export const ApartmentsPage: React.FC<ApartmentsPageProps> = ({
             "@context": "https://schema.org",
             "@type": "RealEstateAgent",
             "name": "Azahar Rentals - Alquiler Vacacional y Turístico en Castellón",
-            "url": "https://azaharentals.com/apartamentos-turisticos-castellon",
+            "url": "https://www.azaharentals.com/apartamentos-turisticos-castellon",
             "telephone": "+34637968999",
             "address": {
               "@type": "PostalAddress",

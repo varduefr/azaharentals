@@ -158,16 +158,16 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li>
                 <a 
-                  href="#calculadora" 
+                  href="/simulador" 
                   onClick={(e) => {
                     if (onOpenSimulator) {
                       e.preventDefault();
                       onOpenSimulator();
                     }
                   }}
-                  className="hover:text-cyan-400 transition-colors cursor-pointer"
+                  className="hover:text-cyan-400 transition-colors cursor-pointer text-cyan-300 font-medium"
                 >
-                  Simulador de Ingresos y Rentabilidad (Nueva página)
+                  Simulador de Ingresos y Rentabilidad (Castellón)
                 </a>
               </li>
             </ul>

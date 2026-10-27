@@ -14,6 +14,7 @@ import { RevenueSimulator } from '../components/RevenueSimulator';
 import { Footer } from '../components/Footer';
 import { useTheme } from '../context/ThemeContext';
 import { MUNICIPALITIES_MARKET_DATA } from '../data/marketStats';
+import { updatePageSeo } from '../utils/seo';
 
 interface SimulatorPageProps {
   initialLocation?: string;
@@ -42,23 +43,20 @@ export const SimulatorPage: React.FC<SimulatorPageProps> = ({
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
-    const originalTitle = document.title;
-    document.title = "Simulador de Rentabilidad Alquiler Vacacional Castellón 2025/2026 | Azahar Rentals";
-    
-    const metaDesc = document.querySelector('meta[name="description"]');
-    const originalDesc = metaDesc ? metaDesc.getAttribute('content') : '';
-    if (metaDesc) {
-      metaDesc.setAttribute(
-        'content',
-        'Calcula gratis los ingresos netos anuales de tu vivienda turística en Castellón (Peñíscola, Benicàssim, Vinaròs, Oropesa). Simulador con datos reales AirDNA y GVA.'
-      );
-    }
+    updatePageSeo({
+      title: "Simulador de Rentabilidad Alquiler Vacacional Castellón 2025/2026 | Azahar Rentals",
+      description: "Calcula gratis los ingresos netos anuales de tu vivienda turística en Castellón (Peñíscola, Benicàssim, Vinaròs, Oropesa). Simulador con datos reales AirDNA y GVA.",
+      path: "/simulador",
+      image: "https://www.azaharentals.com/images/castellon_hero_1788275752376.jpg"
+    });
 
     return () => {
-      document.title = originalTitle;
-      if (metaDesc && originalDesc) {
-        metaDesc.setAttribute('content', originalDesc);
-      }
+      updatePageSeo({
+        title: "Gestión de Alojamientos Turísticos en Castellón | Azahar",
+        description: "Gestión integral de alquiler vacacional y alojamientos turísticos en Castellón. Maximizamos la rentabilidad para propietarios y tramitamos tu licencia.",
+        path: "/",
+        image: "https://www.azaharentals.com/images/castellon_hero_1788275752376.jpg"
+      });
     };
   }, []);
 

@@ -24,6 +24,7 @@ import {
   MapPin,
   Check
 } from 'lucide-react';
+import { updatePageSeo } from '../utils/seo';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { useTheme } from '../context/ThemeContext';
@@ -63,23 +64,20 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    const originalTitle = document.title;
-    document.title = "Lavandería Industrial en Castellón | Hoteles, Pisos Turísticos, Clínicas y Gimnasios | Azahar Rentals";
-
-    const metaDesc = document.querySelector('meta[name="description"]');
-    const originalDesc = metaDesc ? metaDesc.getAttribute('content') : '';
-    if (metaDesc) {
-      metaDesc.setAttribute(
-        'content',
-        'Servicio de lavandería industrial en Castellón para hoteles, apartamentos turísticos, gimnasios y clínicas privadas. Limpieza de sábanas, toallas, batas y uniformes con lavado, secado y planchado calandra.'
-      );
-    }
+    updatePageSeo({
+      title: "Lavandería Industrial en Castellón | Hoteles, Pisos Turísticos, Clínicas y Gimnasios | Azahar Rentals",
+      description: "Servicio de lavandería industrial en Castellón para hoteles, apartamentos turísticos, gimnasios y clínicas privadas. Limpieza de sábanas, toallas, batas y uniformes con lavado, secado y planchado calandra.",
+      path: "/lavanderia-industrial",
+      image: "https://www.azaharentals.com/images/castellon_hero_1788275752376.jpg"
+    });
 
     return () => {
-      document.title = originalTitle;
-      if (metaDesc && originalDesc) {
-        metaDesc.setAttribute('content', originalDesc);
-      }
+      updatePageSeo({
+        title: "Gestión de Alojamientos Turísticos en Castellón | Azahar",
+        description: "Gestión integral de alquiler vacacional y alojamientos turísticos en Castellón. Maximizamos la rentabilidad para propietarios y tramitamos tu licencia.",
+        path: "/",
+        image: "https://www.azaharentals.com/images/castellon_hero_1788275752376.jpg"
+      });
     };
   }, []);
 
@@ -134,7 +132,8 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
             "@context": "https://schema.org",
             "@type": "DryCleaningOrLaundry",
             "name": "Azahar Rentals - Servicio de Lavandería Industrial",
-            "image": "https://azaharentals.com/images/industrial_laundry.jpg",
+            "url": "https://www.azaharentals.com/lavanderia-industrial",
+            "image": "https://www.azaharentals.com/images/industrial_laundry.jpg",
             "telephone": "+34637968999",
             "address": {
               "@type": "PostalAddress",

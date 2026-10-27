@@ -17,6 +17,7 @@ import { SimulatorPage } from './pages/SimulatorPage';
 import { LaundryPage } from './pages/LaundryPage';
 import { ApartmentsPage } from './pages/ApartmentsPage';
 import { AdminView } from './components/admin/AdminView';
+import { updatePageSeo } from './utils/seo';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<'home' | 'simulator' | 'admin' | 'laundry' | 'apartments'>('home');
@@ -74,6 +75,12 @@ export default function App() {
         if (hab) setSelectedBedrooms(Number(hab) || 2);
       } else {
         setCurrentPage('home');
+        updatePageSeo({
+          title: "Gestión de Alojamientos Turísticos en Castellón | Azahar",
+          description: "Gestión integral de alquiler vacacional y alojamientos turísticos en Castellón. Maximizamos la rentabilidad para propietarios y tramitamos tu licencia.",
+          path: "/",
+          image: "https://www.azaharentals.com/images/castellon_hero_1788275752376.jpg"
+        });
       }
     };
 
