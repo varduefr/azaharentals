@@ -7,12 +7,20 @@ import {
   Sparkles, 
   CheckCircle2, 
   Layers,
-  Palette
+  Palette,
+  Check
 } from 'lucide-react';
 
 interface AdminBrandKitModalProps {
   isOpen: boolean;
   onClose: () => void;
+}
+
+interface DownloadOption {
+  label: string;
+  url: string;
+  format: 'svg' | 'png' | 'jpg';
+  variant?: 'primary' | 'secondary' | 'accent';
 }
 
 interface AssetCard {
@@ -21,10 +29,10 @@ interface AssetCard {
   description: string;
   previewUrl: string;
   previewDark?: boolean;
-  svgUrl?: string;
-  pngUrl?: string;
-  jpgUrl?: string;
   dimensions: string;
+  badge?: string;
+  isFeatured?: boolean;
+  downloads: DownloadOption[];
 }
 
 export const AdminBrandKitModal: React.FC<AdminBrandKitModalProps> = ({ isOpen, onClose }) => {
@@ -32,53 +40,92 @@ export const AdminBrandKitModal: React.FC<AdminBrandKitModalProps> = ({ isOpen, 
 
   const assets: AssetCard[] = [
     {
-      title: 'Logotipo Horizontal Oficial',
-      category: 'Versión Principal',
-      description: 'Logotipo maestro para documentos, web, facturas, membretes y soportes de fondo claro.',
+      title: 'Logotipo sobre Fondo Blanco (Como en la Web)',
+      category: 'Fondo Blanco Sólido (#FFFFFF)',
+      description: 'Versión idéntica a la barra de navegación de la web principal sobre fondo blanco puro. Listo para pegar en documentos Word, facturas, presupuestos, PDFs e imprenta sin transparencias inesperadas.',
+      previewUrl: '/azahar-rentals-logo-fondo-blanco.png',
+      previewDark: false,
+      dimensions: 'Ultra HD 3040 × 560 px (PNG/JPG) + Vectorial SVG',
+      badge: 'FORMATO OFICIAL WEB',
+      isFeatured: true,
+      downloads: [
+        { label: 'Descargar PNG Fondo Blanco (3040px)', url: '/azahar-rentals-logo-fondo-blanco.png', format: 'png', variant: 'primary' },
+        { label: 'Descargar JPG Fondo Blanco', url: '/azahar-rentals-logo-fondo-blanco.jpg', format: 'jpg', variant: 'secondary' },
+        { label: 'Descargar SVG Fondo Blanco', url: '/azahar-rentals-logo-fondo-blanco.svg', format: 'svg', variant: 'secondary' }
+      ]
+    },
+    {
+      title: 'Logotipo Horizontal (Fondo Transparente)',
+      category: 'Canal Alfa Transparente',
+      description: 'Logotipo maestro con fondo transparente. Diseñado para superponer con precisión sobre cualquier fondo de color, cabeceras, diseños gráficos o soportes textiles.',
       previewUrl: '/azahar-rentals-logo.png',
       previewDark: false,
-      svgUrl: '/azahar-rentals-logo.svg',
-      pngUrl: '/azahar-rentals-logo.png',
-      dimensions: 'Vectorial SVG + PNG 3040 x 560 px (Ultra HD)'
+      dimensions: 'Ultra HD 3040 × 560 px (PNG) + Vectorial SVG',
+      downloads: [
+        { label: 'Descargar SVG Vectorial', url: '/azahar-rentals-logo.svg', format: 'svg', variant: 'primary' },
+        { label: 'Descargar PNG Transparente', url: '/azahar-rentals-logo.png', format: 'png', variant: 'secondary' }
+      ]
     },
     {
-      title: 'Logotipo Horizontal Negativo (White)',
+      title: 'Isotipo Cuadrado sobre Fondo Blanco',
+      category: 'Icono & Avatar (Fondo Blanco)',
+      description: 'Símbolo del edificio sobre lienzo cuadrado blanco puro. Formato estándar para fotos de perfil de WhatsApp Business, Instagram, ficha de Google Maps y aplicaciones móviles.',
+      previewUrl: '/azahar-rentals-isotipo-fondo-blanco.png',
+      previewDark: false,
+      dimensions: 'Cuadrado 1024 × 1024 px (PNG/JPG/SVG)',
+      downloads: [
+        { label: 'Descargar PNG (1024x1024)', url: '/azahar-rentals-isotipo-fondo-blanco.png', format: 'png', variant: 'primary' },
+        { label: 'Descargar JPG (1024x1024)', url: '/azahar-rentals-isotipo-fondo-blanco.jpg', format: 'jpg', variant: 'secondary' },
+        { label: 'Descargar SVG Vectorial', url: '/azahar-rentals-isotipo-fondo-blanco.svg', format: 'svg', variant: 'secondary' }
+      ]
+    },
+    {
+      title: 'Logotipo Negativo / Modo Oscuro (White)',
       category: 'Para Fondos Oscuros',
-      description: 'Variante con tipografía blanca y cyan brillante para fondos oscuros, fotografía y vídeos.',
+      description: 'Variante con tipografía blanca y cyan brillante sobre fondo transparente para fondos oscuros, fotografía y vídeos corporativos.',
       previewUrl: '/azahar-rentals-logo-white.png',
       previewDark: true,
-      svgUrl: '/azahar-rentals-logo-white.svg',
-      pngUrl: '/azahar-rentals-logo-white.png',
-      dimensions: 'Vectorial SVG + PNG 3040 x 560 px (Ultra HD)'
+      dimensions: 'Ultra HD 3040 × 560 px (PNG) + SVG',
+      downloads: [
+        { label: 'Descargar SVG (Modo Oscuro)', url: '/azahar-rentals-logo-white.svg', format: 'svg', variant: 'primary' },
+        { label: 'Descargar PNG Transparente', url: '/azahar-rentals-logo-white.png', format: 'png', variant: 'secondary' }
+      ]
     },
     {
-      title: 'Isotipo Oficial / Símbolo Cuadrado',
-      category: 'Icono & Avatar',
-      description: 'Símbolo icónico de la marca para foto de perfil de WhatsApp, Instagram, favicons y apps.',
+      title: 'Isotipo Cuadrado (Fondo Transparente)',
+      category: 'Icono & Avatar (Transparente)',
+      description: 'Símbolo del edificio con sombra suave integrada y fondo transparente para marcas de agua o sellos.',
       previewUrl: '/azahar-rentals-isotipo.png',
       previewDark: false,
-      svgUrl: '/azahar-rentals-isotipo.svg',
-      pngUrl: '/azahar-rentals-isotipo.png',
-      dimensions: 'Vectorial SVG + PNG 1024 x 1024 px'
+      dimensions: 'Cuadrado 1024 × 1024 px (PNG) + SVG',
+      downloads: [
+        { label: 'Descargar SVG Vectorial', url: '/azahar-rentals-isotipo.svg', format: 'svg', variant: 'primary' },
+        { label: 'Descargar PNG Transparente', url: '/azahar-rentals-isotipo.png', format: 'png', variant: 'secondary' }
+      ]
     },
     {
       title: 'Logotipo Vertical / Centrado',
       category: 'Versión Apilada',
-      description: 'Composición centrada ideal para cartelería, bolsas de bienvenida, placas y rótulos verticales.',
-      previewUrl: '/azahar-rentals-logo-vertical.png',
+      description: 'Composición vertical centrada ideal para cartelería, placas de apartamentos turísticos, rótulos de fachada y bolsas de bienvenida.',
+      previewUrl: '/azahar-rentals-logo-vertical-fondo-blanco.png',
       previewDark: false,
-      svgUrl: '/azahar-rentals-logo-vertical.svg',
-      pngUrl: '/azahar-rentals-logo-vertical.png',
-      dimensions: 'Vectorial SVG + PNG 2160 x 2160 px'
+      dimensions: 'Cuadrado 2160 × 2160 px (PNG) + SVG',
+      downloads: [
+        { label: 'Descargar PNG Fondo Blanco', url: '/azahar-rentals-logo-vertical-fondo-blanco.png', format: 'png', variant: 'primary' },
+        { label: 'Descargar PNG Transparente', url: '/azahar-rentals-logo-vertical.png', format: 'png', variant: 'secondary' },
+        { label: 'Descargar SVG Vectorial', url: '/azahar-rentals-logo-vertical-fondo-blanco.svg', format: 'svg', variant: 'secondary' }
+      ]
     },
     {
-      title: 'Póster de Presentación de Marca',
+      title: 'Póster de Presentación Corporativa',
       category: 'Showcase 16:9',
-      description: 'Lámina de alta definición con fondo de gradiente premium para presentaciones corporativas.',
+      description: 'Lámina de alta definición con fondo de gradiente premium para presentaciones a propietarios e inversores inmobiliarios.',
       previewUrl: '/azahar-rentals-brand-presentation.jpg',
       previewDark: true,
-      jpgUrl: '/azahar-rentals-brand-presentation.jpg',
-      dimensions: 'JPEG Full HD 1920 x 1080 px (300 DPI)'
+      dimensions: 'JPEG Full HD 1920 × 1080 px (300 DPI)',
+      downloads: [
+        { label: 'Descargar Lámina JPG (1920x1080)', url: '/azahar-rentals-brand-presentation.jpg', format: 'jpg', variant: 'accent' }
+      ]
     }
   ];
 
@@ -96,19 +143,19 @@ export const AdminBrandKitModal: React.FC<AdminBrandKitModalProps> = ({ isOpen, 
             </div>
             <div>
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                Descarga de Logos Oficiales
+                Descarga de Logos Oficiales de Azahar Rentals
                 <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-blue-900/60 text-cyan-300 border border-blue-700/60">
                   Calidad Máxima 300 DPI
                 </span>
               </h2>
               <p className="text-xs text-slate-400">
-                Formatos vectoriales escalables (SVG) y rasterizados en ultra alta resolución (PNG transparente y JPG).
+                Disponibles en fondo blanco sólido (como en la web), transparentes, vectoriales (SVG) y rasterizados en Ultra HD.
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
             aria-label="Cerrar modal"
           >
             <X className="w-5 h-5" />
@@ -124,10 +171,10 @@ export const AdminBrandKitModal: React.FC<AdminBrandKitModalProps> = ({ isOpen, 
               <CheckCircle2 className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
               <div>
                 <p className="text-xs font-semibold text-white">
-                  Tipografía Oficial: Plus Jakarta Sans ExtraBold + Bold
+                  Colores y Tipografía Oficial de Azahar Rentals
                 </p>
                 <p className="text-[11px] text-slate-400">
-                  Los archivos SVG vectoriales tienen tipografía incrustada para editarse e imprimirse sin perder calidad a cualquier escala.
+                  Tipografía oficial <strong>Plus Jakarta Sans</strong> (ExtraBold 800 y Bold 700). Los archivos con fondo blanco (#FFFFFF) reproducen exactamente el encabezado del sitio web.
                 </p>
               </div>
             </div>
@@ -142,28 +189,39 @@ export const AdminBrandKitModal: React.FC<AdminBrandKitModalProps> = ({ isOpen, 
             {assets.map((asset, idx) => (
               <div 
                 key={idx}
-                className="bg-slate-950 border border-slate-800/90 rounded-xl p-4 flex flex-col justify-between hover:border-slate-700 transition-all shadow-md group"
+                className={`border rounded-xl p-4 flex flex-col justify-between hover:border-cyan-500/50 transition-all shadow-md group ${
+                  asset.isFeatured 
+                    ? 'bg-gradient-to-b from-blue-950/30 to-slate-950 border-blue-700/70 ring-1 ring-blue-500/30' 
+                    : 'bg-slate-950 border-slate-800/90'
+                }`}
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">
-                      {asset.category}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">
+                        {asset.category}
+                      </span>
+                      {asset.badge && (
+                        <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-blue-600 text-white shadow-xs">
+                          {asset.badge}
+                        </span>
+                      )}
+                    </div>
                     <span className="text-[10px] text-slate-500 font-mono">
                       {asset.dimensions}
                     </span>
                   </div>
 
-                  <h3 className="text-sm font-bold text-white mb-1">
+                  <h3 className="text-sm font-bold text-white mb-1 flex items-center gap-1.5">
                     {asset.title}
                   </h3>
-                  <p className="text-xs text-slate-400 mb-3">
+                  <p className="text-xs text-slate-400 mb-3 leading-relaxed">
                     {asset.description}
                   </p>
 
                   {/* Visual Preview Box */}
                   <div 
-                    className={`rounded-lg p-4 flex items-center justify-center min-h-[120px] max-h-[140px] mb-4 overflow-hidden border ${
+                    className={`rounded-lg p-4 flex items-center justify-center min-h-[120px] max-h-[140px] mb-4 overflow-hidden border shadow-inner ${
                       asset.previewDark 
                         ? 'bg-slate-900 border-slate-800' 
                         : 'bg-white border-slate-200'
@@ -179,39 +237,30 @@ export const AdminBrandKitModal: React.FC<AdminBrandKitModalProps> = ({ isOpen, 
                 </div>
 
                 {/* Download Actions */}
-                <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-800/80">
-                  {asset.svgUrl && (
+                <div className="flex flex-col gap-2 pt-2 border-t border-slate-800/80">
+                  {asset.downloads.map((dl, dlIdx) => (
                     <a
-                      href={asset.svgUrl}
-                      download={asset.svgUrl.replace('/', '')}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-colors shadow-xs"
+                      key={dlIdx}
+                      href={dl.url}
+                      download={dl.url.replace('/', '')}
+                      className={`inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all shadow-xs cursor-pointer ${
+                        dl.variant === 'primary'
+                          ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                          : dl.variant === 'accent'
+                          ? 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700'
+                      }`}
                     >
-                      <FileCode className="w-3.5 h-3.5" />
-                      <span>Descargar SVG</span>
+                      {dl.format === 'svg' ? (
+                        <FileCode className="w-3.5 h-3.5 text-cyan-400" />
+                      ) : dl.format === 'jpg' ? (
+                        <Download className="w-3.5 h-3.5 text-cyan-400" />
+                      ) : (
+                        <ImageIcon className="w-3.5 h-3.5 text-cyan-400" />
+                      )}
+                      <span>{dl.label}</span>
                     </a>
-                  )}
-
-                  {asset.pngUrl && (
-                    <a
-                      href={asset.pngUrl}
-                      download={asset.pngUrl.replace('/', '')}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-semibold text-xs transition-colors border border-slate-700"
-                    >
-                      <ImageIcon className="w-3.5 h-3.5 text-cyan-400" />
-                      <span>Descargar PNG</span>
-                    </a>
-                  )}
-
-                  {asset.jpgUrl && (
-                    <a
-                      href={asset.jpgUrl}
-                      download={asset.jpgUrl.replace('/', '')}
-                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-semibold text-xs transition-colors shadow-xs"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>Descargar Lámina JPG (1920x1080)</span>
-                    </a>
-                  )}
+                  ))}
                 </div>
               </div>
             ))}
@@ -221,20 +270,20 @@ export const AdminBrandKitModal: React.FC<AdminBrandKitModalProps> = ({ isOpen, 
           <div className="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-2">
             <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
               <Layers className="w-3.5 h-3.5 text-cyan-400" />
-              Especificaciones de Aplicación de Marca
+              Guía de Aplicación de Formatos
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[11px] text-slate-400">
               <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
-                <span className="font-semibold text-slate-300 block mb-0.5">Rotulación & Gran Formato</span>
-                Usa siempre el archivo <strong>.SVG</strong>. No se pixela a ningún tamaño (vallas publicitarias, vinilos, toldos).
+                <span className="font-semibold text-white block mb-0.5">Fondo Blanco Sólido</span>
+                Ideal para documentos impresos, Word, presupuestos, facturas y firmas de email para evitar que se vea gris o negro en visores oscuros.
               </div>
               <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
-                <span className="font-semibold text-slate-300 block mb-0.5">Redes Sociales & Apps</span>
-                Usa el <strong>Isotipo PNG (1024x1024)</strong> para avatares redondos o cuadrados de WhatsApp Business, Instagram o Google Maps.
+                <span className="font-semibold text-white block mb-0.5">Fondo Transparente</span>
+                Ideal para montajes de diseño, superposición en vídeos, fotografías de apartamentos y creatividades publicitarias.
               </div>
               <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
-                <span className="font-semibold text-slate-300 block mb-0.5">Papelería & Facturas</span>
-                Usa el <strong>Logotipo Horizontal PNG</strong> sobre fondo blanco o el SVG importado directamente en Office/Google Docs.
+                <span className="font-semibold text-white block mb-0.5">Formato Vectorial (SVG)</span>
+                Escalabilidad infinita para rotulación de coches, carteles de fachada, toldos, roll-ups y material de gran formato.
               </div>
             </div>
           </div>
@@ -244,7 +293,7 @@ export const AdminBrandKitModal: React.FC<AdminBrandKitModalProps> = ({ isOpen, 
         {/* Footer */}
         <div className="px-6 py-3.5 border-t border-slate-800 flex items-center justify-between bg-slate-950/90 text-xs">
           <span className="text-slate-500">
-            Azahar Rentals S.L. · Identidad Corporativa Oficial
+            Azahar Rentals S.L. · Identidad Corporativa Oficial · Costa de Castellón
           </span>
           <button
             onClick={onClose}
