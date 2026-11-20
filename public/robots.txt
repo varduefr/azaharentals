@@ -4,8 +4,11 @@
 User-agent: *
 Allow: /
 Allow: /apartamentos-turisticos-castellon
+Allow: /apartamentos-turisticos-
 Allow: /simulador
+Allow: /simulador-
 Allow: /lavanderia-industrial
+Allow: /lavanderia-industrial-
 Allow: /images/
 Allow: /platforms/
 

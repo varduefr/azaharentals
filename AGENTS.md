@@ -56,7 +56,7 @@ Actúa como **Ingeniero de Software Senior** y **Especialista en SEO Técnico** 
      1. Añadir su configuración (`canonicalPath: '/nueva-pagina'`, `title`, `description`, `image`, `robots`) en `src/seo/routeMeta.ts`, registrarla en `getRouteSeoForPath()` y añadir su archivo en `PRERENDER_ROUTE_FILES` (para que `vite.config.ts` genere `dist/nueva-pagina.html` con el `<link rel="canonical" href="https://www.azaharentals.com/nueva-pagina" />` ya inyectado en el HTML inicial).
      2. Añadir su regla de `rewrites` en `vercel.json` **antes** del catch-all final hacia `/index.html` (apuntando a `/nueva-pagina.html`).
      3. Integrar la ruta en `src/App.tsx` (`resolveRouteFromLocation()` y `seoMap`) y llamar a `updatePageSeo(...)` en el `useEffect` de la nueva página sin resetear el canonical a `/` en el cleanup.
-     4. Si la página es pública e indexable, añadir su URL `https://www.azaharentals.com/nueva-pagina` en `public/sitemap.xml` (y en el `<nav>` dentro de `<noscript>` en `index.html`).
+     4. Si la página es pública e indexable, registrarla en `src/seo/routeMeta.ts` (por ejemplo en `EXTRA_INDEXABLE_ROUTES` o mediante `MUNICIPALITY_LIST`) para que `generateSitemapXml()` y `npm run build` la añadan automáticamente a `public/sitemap.xml` y `dist/sitemap.xml` (y añadir el enlace interno en el `<nav>` dentro de `<noscript>` en `index.html`).
    - **Etiqueta de Google Analytics / GTM en todas las páginas (una sola vez):**
      - Todas las páginas del sitio deben llevar exactamente **una** etiqueta de Google justo después de la etiqueta de apertura `<head>`:
        ```html

@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import fs from 'fs';
 import path from 'path';
 import {defineConfig} from 'vite';
-import {PRERENDER_ROUTE_FILES, injectRouteSeoIntoHtml} from './src/seo/routeMeta';
+import {PRERENDER_ROUTE_FILES, generateSitemapXml, injectRouteSeoIntoHtml} from './src/seo/routeMeta';
 
 function bookingIcalProxyPlugin() {
   return {
@@ -47,6 +47,19 @@ function bookingIcalProxyPlugin() {
 function routeSeoHtmlPlugin() {
   return {
     name: 'azahar-route-seo-html',
+    configureServer(server: any) {
+      server.middlewares.use((req: any, res: any, next: any) => {
+        const urlPath = (req.url || '').split('?')[0];
+        if (urlPath === '/sitemap.xml' || urlPath === '/site-maps.xml') {
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+          res.setHeader('X-Content-Type-Options', 'nosniff');
+          res.end(generateSitemapXml());
+          return;
+        }
+        next();
+      });
+    },
     transformIndexHtml: {
       order: 'post' as const,
       handler(html: string, ctx: { originalUrl?: string }) {
@@ -57,13 +70,21 @@ function routeSeoHtmlPlugin() {
     closeBundle() {
       const distDir = path.resolve(__dirname, 'dist');
       const indexPath = path.join(distDir, 'index.html');
-      if (!fs.existsSync(indexPath)) return;
-
-      const baseHtml = fs.readFileSync(indexPath, 'utf-8');
-      for (const { filename, meta } of PRERENDER_ROUTE_FILES) {
-        const routeHtml = injectRouteSeoIntoHtml(baseHtml, meta.canonicalPath);
-        fs.writeFileSync(path.join(distDir, filename), routeHtml, 'utf-8');
+      if (fs.existsSync(indexPath)) {
+        const baseHtml = fs.readFileSync(indexPath, 'utf-8');
+        for (const { filename, meta } of PRERENDER_ROUTE_FILES) {
+          const routeHtml = injectRouteSeoIntoHtml(baseHtml, meta.canonicalPath);
+          fs.writeFileSync(path.join(distDir, filename), routeHtml, 'utf-8');
+        }
       }
+
+      // Sync sitemap.xml automatically into both public/ and dist/ on every build
+      const sitemapXml = generateSitemapXml();
+      if (fs.existsSync(distDir)) {
+        fs.writeFileSync(path.join(distDir, 'sitemap.xml'), sitemapXml, 'utf-8');
+      }
+      const publicSitemapPath = path.resolve(__dirname, 'public', 'sitemap.xml');
+      fs.writeFileSync(publicSitemapPath, sitemapXml, 'utf-8');
     },
   };
 }

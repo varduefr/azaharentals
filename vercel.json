@@ -23,6 +23,23 @@
       ]
     },
     {
+      "source": "/site-maps.xml",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/xml; charset=utf-8"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, must-revalidate"
+        }
+      ]
+    },
+    {
       "source": "/robots.txt",
       "headers": [
         {
@@ -274,7 +291,11 @@
       "destination": "/admin.html"
     },
     {
-      "source": "/((?!sitemap\\.xml|robots\\.txt|favicon\\.ico|favicon\\.svg|assets|images|platforms|.*\\.html).*)",
+      "source": "/site-maps.xml",
+      "destination": "/sitemap.xml"
+    },
+    {
+      "source": "/((?!sitemap\\.xml|site-maps\\.xml|robots\\.txt|favicon\\.ico|favicon\\.svg|assets|images|platforms|.*\\.html).*)",
       "destination": "/index.html"
     }
   ]

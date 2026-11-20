@@ -18,7 +18,7 @@ import {
   validateSessionToken,
   getAdminUser
 } from './server/auth';
-import { injectRouteSeoIntoHtml } from './src/seo/routeMeta';
+import { generateSitemapXml, injectRouteSeoIntoHtml } from './src/seo/routeMeta';
 
 const PORT = 3000;
 
@@ -325,19 +325,12 @@ async function startServer() {
     });
   });
 
-  app.get('/sitemap.xml', (req, res) => {
-    const sitemapPath = fs.existsSync(path.join(publicPath, 'sitemap.xml'))
-      ? path.join(publicPath, 'sitemap.xml')
-      : path.join(process.cwd(), 'dist', 'sitemap.xml');
+  app.get(['/sitemap.xml', '/site-maps.xml'], (req, res) => {
+    const xml = generateSitemapXml();
     res.setHeader('Content-Type', 'application/xml; charset=utf-8');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Cache-Control', 'public, max-age=3600');
-    res.sendFile(sitemapPath, {
-      headers: {
-        'Content-Type': 'application/xml; charset=utf-8',
-        'X-Content-Type-Options': 'nosniff'
-      }
-    });
+    res.status(200).send(xml);
   });
 
   // Serve static files from public root, images and platforms
