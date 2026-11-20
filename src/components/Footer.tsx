@@ -9,11 +9,13 @@ import {
   FileCheck
 } from 'lucide-react';
 
+import { MunicipalitySlug } from '../data/municipalitySeoData';
+
 interface FooterProps {
   onOpenLicenseModal: () => void;
   onOpenSimulator?: () => void;
-  onNavigateToLaundry?: () => void;
-  onNavigateToApartments?: (apartmentId?: string) => void;
+  onNavigateToLaundry?: (municipalitySlug?: MunicipalitySlug | null) => void;
+  onNavigateToApartments?: (apartmentId?: string, municipalitySlug?: MunicipalitySlug | null) => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({ 
@@ -60,36 +62,29 @@ export const Footer: React.FC<FooterProps> = ({
               Destinos en Castellón
             </h4>
             <ul className="space-y-2">
-              <li>
-                <a href="#destinos" className="hover:text-cyan-400 transition-colors">
-                  Gestión Alquiler Peñíscola
-                </a>
-              </li>
-              <li>
-                <a href="#destinos" className="hover:text-cyan-400 transition-colors">
-                  Gestión Alquiler Vinaròs
-                </a>
-              </li>
-              <li>
-                <a href="#destinos" className="hover:text-cyan-400 transition-colors">
-                  Gestión Alquiler Benicarló
-                </a>
-              </li>
-              <li>
-                <a href="#destinos" className="hover:text-cyan-400 transition-colors">
-                  Gestión Alquiler Oropesa del Mar
-                </a>
-              </li>
-              <li>
-                <a href="#destinos" className="hover:text-cyan-400 transition-colors">
-                  Gestión Alquiler Alcossebre
-                </a>
-              </li>
-              <li>
-                <a href="#destinos" className="hover:text-cyan-400 transition-colors">
-                  Gestión Alquiler Benicàssim
-                </a>
-              </li>
+              {([
+                { label: 'Apartamentos en Peñíscola', slug: 'peniscola', href: '/apartamentos-turisticos-peniscola' },
+                { label: 'Apartamentos en Vinaròs', slug: 'vinaros', href: '/apartamentos-turisticos-vinaros' },
+                { label: 'Apartamentos en Benicarló', slug: 'benicarlo', href: '/apartamentos-turisticos-benicarlo' },
+                { label: 'Apartamentos en Oropesa del Mar', slug: 'oropesa-del-mar', href: '/apartamentos-turisticos-oropesa-del-mar' },
+                { label: 'Apartamentos en Alcossebre', slug: 'alcossebre', href: '/apartamentos-turisticos-alcossebre' },
+                { label: 'Apartamentos en Benicàssim', slug: 'benicassim', href: '/apartamentos-turisticos-benicassim' },
+              ] as { label: string; slug: MunicipalitySlug; href: string }[]).map((dest) => (
+                <li key={dest.slug}>
+                  <a
+                    href={dest.href}
+                    onClick={(e) => {
+                      if (onNavigateToApartments) {
+                        e.preventDefault();
+                        onNavigateToApartments(undefined, dest.slug);
+                      }
+                    }}
+                    className="hover:text-cyan-400 transition-colors cursor-pointer"
+                  >
+                    {dest.label}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -124,7 +119,7 @@ export const Footer: React.FC<FooterProps> = ({
                   onClick={(e) => {
                     if (onNavigateToApartments) {
                       e.preventDefault();
-                      onNavigateToApartments();
+                      onNavigateToApartments(undefined, null);
                     }
                   }}
                   className="hover:text-cyan-400 transition-colors cursor-pointer text-cyan-300 font-medium"
@@ -138,22 +133,40 @@ export const Footer: React.FC<FooterProps> = ({
                   onClick={(e) => {
                     if (onNavigateToLaundry) {
                       e.preventDefault();
-                      onNavigateToLaundry();
+                      onNavigateToLaundry(null);
                     }
                   }}
                   className="hover:text-cyan-400 transition-colors cursor-pointer text-cyan-300 font-medium"
                 >
-                  Lavanderia Industrial B2B
+                  Lavandería Industrial Castellón
                 </a>
               </li>
               <li>
-                <a href="#servicios" className="hover:text-cyan-400 transition-colors">
-                  Limpieza y Lavandería Hotelera
+                <a 
+                  href="/lavanderia-industrial-peniscola" 
+                  onClick={(e) => {
+                    if (onNavigateToLaundry) {
+                      e.preventDefault();
+                      onNavigateToLaundry('peniscola');
+                    }
+                  }}
+                  className="hover:text-cyan-400 transition-colors cursor-pointer"
+                >
+                  Lavandería Industrial Peñíscola
                 </a>
               </li>
               <li>
-                <a href="#servicios" className="hover:text-cyan-400 transition-colors">
-                  Mantenimiento y Control de Averías
+                <a 
+                  href="/lavanderia-industrial-benicarlo" 
+                  onClick={(e) => {
+                    if (onNavigateToLaundry) {
+                      e.preventDefault();
+                      onNavigateToLaundry('benicarlo');
+                    }
+                  }}
+                  className="hover:text-cyan-400 transition-colors cursor-pointer"
+                >
+                  Lavandería Industrial Benicarló
                 </a>
               </li>
               <li>

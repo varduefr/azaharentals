@@ -43,7 +43,13 @@ import { PlatformsCarouselSection } from '../components/PlatformsCarouselSection
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import { updatePageSeo } from '../utils/seo';
-import { APARTMENTS_SEO } from '../seo/routeMeta';
+import { APARTMENTS_SEO, getApartmentsSeoForMunicipality } from '../seo/routeMeta';
+import {
+  MUNICIPALITY_LIST,
+  MUNICIPALITY_PROFILES,
+  MunicipalitySlug,
+  matchesApartmentMunicipality,
+} from '../data/municipalitySeoData';
 import { FEATURED_APARTMENTS, FeaturedApartment, ApartmentPhoto } from '../data/featuredApartments';
 import { 
   fetchApartments, 
@@ -77,9 +83,11 @@ import { sendEmailNotification } from '../services/emailService';
 
 interface ApartmentsPageProps {
   initialApartmentId?: string | null;
+  municipalitySlug?: MunicipalitySlug | null;
   onNavigateHome: (sectionId?: string) => void;
-  onNavigateToSimulator?: () => void;
-  onNavigateToLaundry?: () => void;
+  onNavigateToSimulator?: (location?: string, bedrooms?: number, municipalitySlug?: MunicipalitySlug | null) => void;
+  onNavigateToLaundry?: (municipalitySlug?: MunicipalitySlug | null) => void;
+  onNavigateToApartments?: (apartmentId?: string, municipalitySlug?: MunicipalitySlug | null) => void;
   onNavigateToAdmin?: () => void;
   onOpenLicenseModal?: () => void;
   onOpenContact?: (data?: any) => void;
@@ -130,15 +138,23 @@ const getApartmentDisplayPhotos = (apt: FeaturedApartment): ApartmentPhoto[] => 
 
 export const ApartmentsPage: React.FC<ApartmentsPageProps> = ({
   initialApartmentId,
+  municipalitySlug = null,
   onNavigateHome,
   onNavigateToSimulator,
   onNavigateToLaundry,
+  onNavigateToApartments,
   onNavigateToAdmin,
   onOpenLicenseModal = () => {},
   onOpenContact = () => {}
 }) => {
   const { currentTheme } = useTheme();
   const { showSuccess } = useToast();
+
+  const municipalityProfile = municipalitySlug ? MUNICIPALITY_PROFILES[municipalitySlug] : null;
+  const pageSeoMeta = useMemo(
+    () => getApartmentsSeoForMunicipality(municipalitySlug),
+    [municipalitySlug]
+  );
 
   // Apartment list state
   const [apartments, setApartments] = useState<FeaturedApartment[]>(() =>
@@ -150,6 +166,11 @@ export const ApartmentsPage: React.FC<ApartmentsPageProps> = ({
       }))
     }))
   );
+
+  const visibleApartments = useMemo(() => {
+    if (!municipalitySlug) return apartments;
+    return apartments.filter((apt) => matchesApartmentMunicipality(apt.town, municipalitySlug));
+  }, [apartments, municipalitySlug]);
 
   // Selected apartment for detailed booking view
   const [selectedApartment, setSelectedApartment] = useState<FeaturedApartment | null>(() => {
@@ -180,18 +201,21 @@ export const ApartmentsPage: React.FC<ApartmentsPageProps> = ({
     };
   }, []);
 
-  // Update URL and SEO metadata
+  // Update URL and SEO metadata whenever route municipality changes
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (!initialApartmentId) {
+      setSelectedApartment(null);
+    }
 
     updatePageSeo({
-      title: APARTMENTS_SEO.title,
-      description: APARTMENTS_SEO.description,
-      path: APARTMENTS_SEO.canonicalPath,
-      image: APARTMENTS_SEO.image,
-      robots: APARTMENTS_SEO.robots
+      title: pageSeoMeta.title,
+      description: pageSeoMeta.description,
+      path: pageSeoMeta.canonicalPath,
+      image: pageSeoMeta.image,
+      robots: pageSeoMeta.robots
     });
-  }, []);
+  }, [pageSeoMeta, initialApartmentId]);
 
   // Sync apartments with database & real-time updates
   useEffect(() => {
@@ -481,17 +505,21 @@ export const ApartmentsPage: React.FC<ApartmentsPageProps> = ({
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "RealEstateAgent",
-            "name": "Azahar Rentals - Alquiler Vacacional y Turístico en Castellón",
-            "url": "https://www.azaharentals.com/apartamentos-turisticos-castellon",
+            "name": municipalityProfile
+              ? `Azahar Rentals - Apartamentos Turísticos en ${municipalityProfile.name}`
+              : "Azahar Rentals - Alquiler Vacacional y Turístico en Castellón",
+            "url": `https://www.azaharentals.com${pageSeoMeta.canonicalPath}`,
             "telephone": "+34637968999",
             "address": {
               "@type": "PostalAddress",
-              "addressLocality": "Castellón de la Plana",
+              "addressLocality": municipalityProfile ? municipalityProfile.name : "Castellón de la Plana",
               "addressRegion": "Castellón",
               "addressCountry": "ES"
             },
-            "description": "Alquiler vacacional y apartamentos turísticos verificados en la Costa de Castellón: Peñíscola, Benicarló y Alcover con licencias turísticas oficiales VT.",
-            "areaServed": ["Castellón", "Peñíscola", "Benicarló", "Vinaròs", "Oropesa del Mar", "Benicàssim", "Alcover"]
+            "description": pageSeoMeta.description,
+            "areaServed": municipalityProfile
+              ? [municipalityProfile.name, "Castellón"]
+              : ["Castellón", "Peñíscola", "Benicarló", "Vinaròs", "Oropesa del Mar", "Benicàssim", "Alcossebre", "Alcover"]
           })
         }}
       />
@@ -501,13 +529,25 @@ export const ApartmentsPage: React.FC<ApartmentsPageProps> = ({
         currentPage="apartments"
         onOpenLicenseModal={onOpenLicenseModal}
         onOpenCalculator={() => {
-          if (onNavigateToSimulator) onNavigateToSimulator();
+          if (onNavigateToSimulator) {
+            onNavigateToSimulator(municipalityProfile?.marketStatsId, 2, municipalitySlug);
+          }
         }}
-        onNavigateToSimulator={onNavigateToSimulator}
-        onNavigateToLaundry={onNavigateToLaundry}
+        onNavigateToSimulator={() => {
+          if (onNavigateToSimulator) {
+            onNavigateToSimulator(municipalityProfile?.marketStatsId, 2, municipalitySlug);
+          }
+        }}
+        onNavigateToLaundry={() => {
+          if (onNavigateToLaundry) onNavigateToLaundry(municipalitySlug);
+        }}
         onNavigateToApartments={() => {
           setSelectedApartment(null);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          if (onNavigateToApartments && municipalitySlug) {
+            onNavigateToApartments(undefined, null);
+          } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
         }}
         onNavigateToHome={onNavigateHome}
         onNavigateToAdmin={onNavigateToAdmin}
@@ -517,7 +557,7 @@ export const ApartmentsPage: React.FC<ApartmentsPageProps> = ({
       {/* Navigation Breadcrumb Bar */}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <nav className="flex items-center gap-2 text-xs text-slate-500" aria-label="Breadcrumb">
+          <nav className="flex items-center gap-2 text-xs text-slate-500 flex-wrap" aria-label="Breadcrumb">
             <button 
               type="button"
               onClick={() => onNavigateHome()}
@@ -527,16 +567,42 @@ export const ApartmentsPage: React.FC<ApartmentsPageProps> = ({
               <span>Inicio</span>
             </button>
             <span aria-hidden="true">/</span>
-            <button 
-              type="button"
-              onClick={() => {
-                setSelectedApartment(null);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+            <a
+              href="/apartamentos-turisticos-castellon"
+              onClick={(e) => {
+                if (onNavigateToApartments) {
+                  e.preventDefault();
+                  setSelectedApartment(null);
+                  onNavigateToApartments(undefined, null);
+                }
               }}
-              className="hover:text-blue-600 transition-colors cursor-pointer"
+              className={`hover:text-blue-600 transition-colors cursor-pointer ${
+                !municipalityProfile && !activeApartment ? 'text-slate-900 font-semibold' : ''
+              }`}
             >
-              Apartamentos Turísticos
-            </button>
+              Apartamentos Turísticos Castellón
+            </a>
+            {municipalityProfile && (
+              <>
+                <span aria-hidden="true">/</span>
+                <a
+                  href={municipalityProfile.apartmentsSeo.canonicalPath}
+                  onClick={(e) => {
+                    if (onNavigateToApartments) {
+                      e.preventDefault();
+                      setSelectedApartment(null);
+                      onNavigateToApartments(undefined, municipalityProfile.slug);
+                    }
+                  }}
+                  className={`hover:text-blue-600 transition-colors cursor-pointer ${
+                    !activeApartment ? 'text-slate-900 font-semibold' : ''
+                  }`}
+                  aria-current={!activeApartment ? 'page' : undefined}
+                >
+                  {municipalityProfile.name}
+                </a>
+              </>
+            )}
             {activeApartment && (
               <>
                 <span aria-hidden="true">/</span>
@@ -569,7 +635,11 @@ export const ApartmentsPage: React.FC<ApartmentsPageProps> = ({
                   className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-white text-xs font-semibold transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  <span>Ver todos los 4 apartamentos</span>
+                  <span>
+                    {municipalityProfile
+                      ? `Ver apartamentos en ${municipalityProfile.name}`
+                      : `Ver todos los ${visibleApartments.length} apartamentos`}
+                  </span>
                 </button>
 
                 <span className="text-xs text-emerald-400 font-mono bg-emerald-950/80 px-2.5 py-1 rounded border border-emerald-800/60">
@@ -1272,24 +1342,32 @@ export const ApartmentsPage: React.FC<ApartmentsPageProps> = ({
           </div>
         ) : (
           /* ================================================================= */
-          /* VISTA 2: LISTADO DE LOS 4 APARTAMENTOS (MISMO DISEÑO Y BREADCRUMB)*/
+          /* VISTA 2: LISTADO DE APARTAMENTOS (FILTRADO POR MUNICIPIO SI APLICA)*/
           /* ================================================================= */
           <div className="bg-slate-900 text-white py-12 sm:py-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               
               {/* Single H1 for Technical SEO on this Page */}
-              <div className="text-center max-w-3xl mx-auto mb-12">
+              <div className="text-center max-w-3xl mx-auto mb-10">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-cyan-950/80 border border-cyan-700/60 text-cyan-300 mb-3">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Alquiler Vacacional Turístico Verificado</span>
+                  <span>
+                    {municipalityProfile
+                      ? municipalityProfile.apartmentsSeo.badge
+                      : 'Alquiler Vacacional Turístico Verificado'}
+                  </span>
                 </div>
 
                 <h1 className={`text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white mb-4 tracking-tight ${currentTheme.typography.headingFontClass}`}>
-                  Apartamentos Turísticos y Vacacionales en Castellón
+                  {municipalityProfile
+                    ? municipalityProfile.apartmentsSeo.h1
+                    : 'Apartamentos Turísticos y Vacacionales en Castellón'}
                 </h1>
 
                 <p className="text-base sm:text-lg text-slate-300 leading-relaxed">
-                  Alojamientos turísticos exclusivos gestionados con servicio hotelero 360°, número de registro oficial VT de la Generalitat Valenciana y atención 24 horas.
+                  {municipalityProfile
+                    ? municipalityProfile.apartmentsSeo.subtitle
+                    : 'Alojamientos turísticos exclusivos gestionados con servicio hotelero 360°, número de registro oficial VT de la Generalitat Valenciana y atención 24 horas.'}
                 </p>
 
                 {/* Trust Badges */}
@@ -1304,14 +1382,107 @@ export const ApartmentsPage: React.FC<ApartmentsPageProps> = ({
                   </div>
                   <div className="flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span>Lavandería y limpieza hotelera</span>
+                    <span>
+                      {municipalityProfile
+                        ? `Limpieza y lavandería hotelera en ${municipalityProfile.name}`
+                        : 'Lavandería y limpieza hotelera'}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              {/* 4 Apartment Cards Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {apartments.map((apt) => {
+              {/* SEO Internal Links Bar by Municipality */}
+              <nav
+                aria-label="Filtrar apartamentos turísticos por municipio de Castellón"
+                className="flex flex-wrap items-center justify-center gap-2 mb-10"
+              >
+                <a
+                  href="/apartamentos-turisticos-castellon"
+                  onClick={(e) => {
+                    if (onNavigateToApartments) {
+                      e.preventDefault();
+                      onNavigateToApartments(undefined, null);
+                    }
+                  }}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${
+                    !municipalitySlug
+                      ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-md'
+                      : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white'
+                  }`}
+                >
+                  Toda la Costa de Castellón
+                </a>
+                {MUNICIPALITY_LIST.map((m) => {
+                  const isActive = municipalitySlug === m.slug;
+                  return (
+                    <a
+                      key={m.slug}
+                      href={m.apartmentsSeo.canonicalPath}
+                      onClick={(e) => {
+                        if (onNavigateToApartments) {
+                          e.preventDefault();
+                          onNavigateToApartments(undefined, m.slug);
+                        }
+                      }}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
+                        isActive
+                          ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-md'
+                          : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white'
+                      }`}
+                    >
+                      <MapPin className={`w-3 h-3 ${isActive ? 'text-slate-950' : 'text-cyan-400'}`} />
+                      <span>{m.name}</span>
+                    </a>
+                  );
+                })}
+              </nav>
+
+              {/* Filtered Apartment Cards Grid or Municipality Availability Card */}
+              {visibleApartments.length === 0 && municipalityProfile ? (
+                <div className="bg-slate-800/70 border border-slate-700 rounded-3xl p-8 sm:p-10 text-center max-w-3xl mx-auto space-y-5 shadow-xl">
+                  <div className="w-14 h-14 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 flex items-center justify-center mx-auto">
+                    <MapPin className="w-7 h-7" />
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-white">
+                    {municipalityProfile.apartmentsSeo.emptyStateTitle}
+                  </h2>
+                  <p className="text-sm text-slate-300 leading-relaxed">
+                    {municipalityProfile.apartmentsSeo.emptyStateDescription}
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-3 pt-2">
+                    <a
+                      href={`https://wa.me/34637968999?text=${encodeURIComponent(`Hola Azahar Rentals, busco disponibilidad de apartamentos turísticos en ${municipalityProfile.name}.`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-2 shadow-md transition-colors"
+                    >
+                      <Phone className="w-4 h-4" />
+                      <span>Consultar disponibilidad en {municipalityProfile.name}</span>
+                    </a>
+                    <a
+                      href="/apartamentos-turisticos-castellon"
+                      onClick={(e) => {
+                        if (onNavigateToApartments) {
+                          e.preventDefault();
+                          onNavigateToApartments(undefined, null);
+                        }
+                      }}
+                      className="px-5 py-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold flex items-center gap-2 transition-colors"
+                    >
+                      <Building2 className="w-4 h-4 text-cyan-300" />
+                      <span>Ver todos los apartamentos en Castellón</span>
+                    </a>
+                  </div>
+                </div>
+              ) : (
+              <div className={`grid gap-6 ${
+                visibleApartments.length === 1
+                  ? 'grid-cols-1 max-w-md mx-auto'
+                  : visibleApartments.length === 2
+                  ? 'grid-cols-1 sm:grid-cols-2 max-w-4xl mx-auto'
+                  : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+              }`}>
+                {visibleApartments.map((apt) => {
                   const currentPhotoIdx = activePhotoIndices[apt.id] || 0;
                   const currentPhoto = apt.photos[currentPhotoIdx] || apt.photos[0];
 
@@ -1496,6 +1667,67 @@ export const ApartmentsPage: React.FC<ApartmentsPageProps> = ({
                   );
                 })}
               </div>
+              )}
+
+              {/* Municipality Local SEO Guide & Interlinking Section */}
+              {municipalityProfile && (
+                <section className="mt-14 bg-slate-800/50 border border-slate-700/80 rounded-3xl p-6 sm:p-8 space-y-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    <div className="lg:col-span-7 space-y-3">
+                      <span className="text-xs font-bold uppercase tracking-wider text-cyan-400">
+                        Guía Local de Alojamiento Turístico · {municipalityProfile.name}
+                      </span>
+                      <h2 className="text-2xl font-extrabold text-white">
+                        {municipalityProfile.apartmentsSeo.localGuideTitle}
+                      </h2>
+                      <p className="text-sm text-slate-300 leading-relaxed">
+                        {municipalityProfile.apartmentsSeo.localGuideText}
+                      </p>
+                      <div className="pt-2 flex flex-wrap gap-3">
+                        <a
+                          href={municipalityProfile.simulatorSeo.canonicalPath}
+                          onClick={(e) => {
+                            if (onNavigateToSimulator) {
+                              e.preventDefault();
+                              onNavigateToSimulator(municipalityProfile.marketStatsId, 2, municipalityProfile.slug);
+                            }
+                          }}
+                          className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors"
+                        >
+                          Simulador Rentabilidad {municipalityProfile.name}
+                        </a>
+                        <a
+                          href={municipalityProfile.laundrySeo.canonicalPath}
+                          onClick={(e) => {
+                            if (onNavigateToLaundry) {
+                              e.preventDefault();
+                              onNavigateToLaundry(municipalityProfile.slug);
+                            }
+                          }}
+                          className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-cyan-300 text-xs font-bold transition-colors"
+                        >
+                          Lavandería Industrial en {municipalityProfile.name}
+                        </a>
+                      </div>
+                    </div>
+
+                    <div className="lg:col-span-5 bg-slate-900/80 border border-slate-700/70 rounded-2xl p-5 space-y-3">
+                      <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                        <Waves className="w-4 h-4 text-cyan-400" />
+                        <span>Zonas y Playas de Actuación en {municipalityProfile.name}</span>
+                      </h3>
+                      <ul className="space-y-2 text-xs text-slate-300">
+                        {municipalityProfile.apartmentsSeo.zonesHighlight.map((zone) => (
+                          <li key={zone} className="flex items-start gap-2">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                            <span>{zone}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </section>
+              )}
 
               {/* Bottom Support Banner */}
               <div className="mt-14 p-5 sm:p-6 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -1504,13 +1736,25 @@ export const ApartmentsPage: React.FC<ApartmentsPageProps> = ({
                     <ShieldCheck className="w-6 h-6 text-cyan-400" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-white">¿Buscas otra ubicación o fechas en la Costa de Castellón?</h3>
-                    <p className="text-xs sm:text-sm text-slate-400">Gestionamos más de 45 viviendas turísticas entre Vinaròs, Benicarló, Peñíscola, Oropesa y Benicàssim.</p>
+                    <h3 className="text-base font-bold text-white">
+                      {municipalityProfile
+                        ? `¿Tienes una vivienda turística o buscas fechas en ${municipalityProfile.name}?`
+                        : '¿Buscas otra ubicación o fechas en la Costa de Castellón?'}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-400">
+                      {municipalityProfile
+                        ? `Nuestro equipo local opera en ${municipalityProfile.name} con gestión integral 360°, limpieza hotelera y tramitación de Licencia VT.`
+                        : 'Gestionamos más de 45 viviendas turísticas entre Vinaròs, Benicarló, Peñíscola, Oropesa, Alcossebre y Benicàssim.'}
+                    </p>
                   </div>
                 </div>
 
                 <a
-                  href="https://wa.me/34637968999?text=Hola%20Azahar%20Rentals,%20busco%20alquiler%20vacacional%20en%20la%20Costa%20de%20Castell%C3%B3n"
+                  href={`https://wa.me/34637968999?text=${encodeURIComponent(
+                    municipalityProfile
+                      ? `Hola Azahar Rentals, busco alquiler vacacional o información en ${municipalityProfile.name}`
+                      : 'Hola Azahar Rentals, busco alquiler vacacional en la Costa de Castellón'
+                  )}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-2 shadow-md transition-colors shrink-0"
@@ -1619,11 +1863,21 @@ export const ApartmentsPage: React.FC<ApartmentsPageProps> = ({
       {/* Shared Footer */}
       <Footer
         onOpenLicenseModal={onOpenLicenseModal}
-        onOpenSimulator={onNavigateToSimulator}
-        onNavigateToLaundry={onNavigateToLaundry}
-        onNavigateToApartments={() => {
+        onOpenSimulator={() => {
+          if (onNavigateToSimulator) {
+            onNavigateToSimulator(municipalityProfile?.marketStatsId, 2, municipalitySlug);
+          }
+        }}
+        onNavigateToLaundry={() => {
+          if (onNavigateToLaundry) onNavigateToLaundry(municipalitySlug);
+        }}
+        onNavigateToApartments={(aptId, muniSlug) => {
           setSelectedApartment(null);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          if (onNavigateToApartments) {
+            onNavigateToApartments(aptId, muniSlug);
+          } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
         }}
       />
     </div>

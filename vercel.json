@@ -46,6 +46,70 @@
       "destination": "/apartamentos-turisticos-castellon.html"
     },
     {
+      "source": "/apartamentos-turisticos-peniscola",
+      "destination": "/apartamentos-turisticos-peniscola.html"
+    },
+    {
+      "source": "/apartamentos-turisticos-peñiscola",
+      "destination": "/apartamentos-turisticos-peniscola.html"
+    },
+    {
+      "source": "/apartamentos-turisticos-peñíscola",
+      "destination": "/apartamentos-turisticos-peniscola.html"
+    },
+    {
+      "source": "/apartamentos-turisticos-pe%C3%B1iscola",
+      "destination": "/apartamentos-turisticos-peniscola.html"
+    },
+    {
+      "source": "/apartamentos-turisticos-pe%C3%B1%C3%ADscola",
+      "destination": "/apartamentos-turisticos-peniscola.html"
+    },
+    {
+      "source": "/apartamentos-turisticos-vinaros",
+      "destination": "/apartamentos-turisticos-vinaros.html"
+    },
+    {
+      "source": "/apartamentos-turisticos-vinaròs",
+      "destination": "/apartamentos-turisticos-vinaros.html"
+    },
+    {
+      "source": "/apartamentos-turisticos-vinaroz",
+      "destination": "/apartamentos-turisticos-vinaros.html"
+    },
+    {
+      "source": "/apartamentos-turisticos-benicarlo",
+      "destination": "/apartamentos-turisticos-benicarlo.html"
+    },
+    {
+      "source": "/apartamentos-turisticos-benicarló",
+      "destination": "/apartamentos-turisticos-benicarlo.html"
+    },
+    {
+      "source": "/apartamentos-turisticos-oropesa-del-mar",
+      "destination": "/apartamentos-turisticos-oropesa-del-mar.html"
+    },
+    {
+      "source": "/apartamentos-turisticos-oropesa",
+      "destination": "/apartamentos-turisticos-oropesa-del-mar.html"
+    },
+    {
+      "source": "/apartamentos-turisticos-benicassim",
+      "destination": "/apartamentos-turisticos-benicassim.html"
+    },
+    {
+      "source": "/apartamentos-turisticos-benicàssim",
+      "destination": "/apartamentos-turisticos-benicassim.html"
+    },
+    {
+      "source": "/apartamentos-turisticos-benicasim",
+      "destination": "/apartamentos-turisticos-benicassim.html"
+    },
+    {
+      "source": "/apartamentos-turisticos-alcossebre",
+      "destination": "/apartamentos-turisticos-alcossebre.html"
+    },
+    {
       "source": "/apartamentos",
       "destination": "/apartamentos.html"
     },
@@ -56,6 +120,74 @@
     {
       "source": "/lavanderia-industrial",
       "destination": "/lavanderia-industrial.html"
+    },
+    {
+      "source": "/lavanderia-industrial-castellon",
+      "destination": "/lavanderia-industrial.html"
+    },
+    {
+      "source": "/lavanderia-industrial-peniscola",
+      "destination": "/lavanderia-industrial-peniscola.html"
+    },
+    {
+      "source": "/lavanderia-industrial-peñiscola",
+      "destination": "/lavanderia-industrial-peniscola.html"
+    },
+    {
+      "source": "/lavanderia-industrial-peñíscola",
+      "destination": "/lavanderia-industrial-peniscola.html"
+    },
+    {
+      "source": "/lavanderia-industrial-pe%C3%B1iscola",
+      "destination": "/lavanderia-industrial-peniscola.html"
+    },
+    {
+      "source": "/lavanderia-industrial-pe%C3%B1%C3%ADscola",
+      "destination": "/lavanderia-industrial-peniscola.html"
+    },
+    {
+      "source": "/lavanderia-industrial-vinaros",
+      "destination": "/lavanderia-industrial-vinaros.html"
+    },
+    {
+      "source": "/lavanderia-industrial-vinaròs",
+      "destination": "/lavanderia-industrial-vinaros.html"
+    },
+    {
+      "source": "/lavanderia-industrial-vinaroz",
+      "destination": "/lavanderia-industrial-vinaros.html"
+    },
+    {
+      "source": "/lavanderia-industrial-benicarlo",
+      "destination": "/lavanderia-industrial-benicarlo.html"
+    },
+    {
+      "source": "/lavanderia-industrial-benicarló",
+      "destination": "/lavanderia-industrial-benicarlo.html"
+    },
+    {
+      "source": "/lavanderia-industrial-oropesa-del-mar",
+      "destination": "/lavanderia-industrial-oropesa-del-mar.html"
+    },
+    {
+      "source": "/lavanderia-industrial-oropesa",
+      "destination": "/lavanderia-industrial-oropesa-del-mar.html"
+    },
+    {
+      "source": "/lavanderia-industrial-benicassim",
+      "destination": "/lavanderia-industrial-benicassim.html"
+    },
+    {
+      "source": "/lavanderia-industrial-benicàssim",
+      "destination": "/lavanderia-industrial-benicassim.html"
+    },
+    {
+      "source": "/lavanderia-industrial-benicasim",
+      "destination": "/lavanderia-industrial-benicassim.html"
+    },
+    {
+      "source": "/lavanderia-industrial-alcossebre",
+      "destination": "/lavanderia-industrial-alcossebre.html"
     },
     {
       "source": "/lavanderia-industrial/:path*",
@@ -72,6 +204,54 @@
     {
       "source": "/simulador",
       "destination": "/simulador.html"
+    },
+    {
+      "source": "/simulador-peniscola",
+      "destination": "/simulador-peniscola.html"
+    },
+    {
+      "source": "/simulador-peñiscola",
+      "destination": "/simulador-peniscola.html"
+    },
+    {
+      "source": "/simulador-peñíscola",
+      "destination": "/simulador-peniscola.html"
+    },
+    {
+      "source": "/simulador-pe%C3%B1iscola",
+      "destination": "/simulador-peniscola.html"
+    },
+    {
+      "source": "/simulador-pe%C3%B1%C3%ADscola",
+      "destination": "/simulador-peniscola.html"
+    },
+    {
+      "source": "/simulador-vinaros",
+      "destination": "/simulador-vinaros.html"
+    },
+    {
+      "source": "/simulador-vinaroz",
+      "destination": "/simulador-vinaros.html"
+    },
+    {
+      "source": "/simulador-benicarlo",
+      "destination": "/simulador-benicarlo.html"
+    },
+    {
+      "source": "/simulador-oropesa-del-mar",
+      "destination": "/simulador-oropesa-del-mar.html"
+    },
+    {
+      "source": "/simulador-oropesa",
+      "destination": "/simulador-oropesa-del-mar.html"
+    },
+    {
+      "source": "/simulador-benicassim",
+      "destination": "/simulador-benicassim.html"
+    },
+    {
+      "source": "/simulador-alcossebre",
+      "destination": "/simulador-alcossebre.html"
     },
     {
       "source": "/simulador/:path*",

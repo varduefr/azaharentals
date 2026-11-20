@@ -25,29 +25,41 @@ import {
   Check
 } from 'lucide-react';
 import { updatePageSeo } from '../utils/seo';
-import { LAUNDRY_SEO } from '../seo/routeMeta';
+import { getLaundrySeoForMunicipality } from '../seo/routeMeta';
+import {
+  MUNICIPALITY_LIST,
+  MUNICIPALITY_PROFILES,
+  MunicipalitySlug,
+} from '../data/municipalitySeoData';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { useTheme } from '../context/ThemeContext';
 
 interface LaundryPageProps {
+  municipalitySlug?: MunicipalitySlug | null;
   onNavigateHome: (sectionId?: string) => void;
-  onNavigateToSimulator?: () => void;
+  onNavigateToSimulator?: (location?: string, bedrooms?: number, municipalitySlug?: MunicipalitySlug | null) => void;
   onNavigateToAdmin?: () => void;
-  onNavigateToApartments?: (apartmentId?: string) => void;
+  onNavigateToApartments?: (apartmentId?: string, municipalitySlug?: MunicipalitySlug | null) => void;
+  onNavigateToLaundry?: (municipalitySlug?: MunicipalitySlug | null) => void;
   onOpenLicenseModal?: () => void;
   onOpenContact?: (data?: any) => void;
 }
 
 export const LaundryPage: React.FC<LaundryPageProps> = ({
+  municipalitySlug = null,
   onNavigateHome,
   onNavigateToSimulator,
   onNavigateToAdmin,
   onNavigateToApartments,
+  onNavigateToLaundry,
   onOpenLicenseModal = () => {},
   onOpenContact = () => {}
 }) => {
   const { currentTheme } = useTheme();
+  const municipalityProfile = municipalitySlug ? MUNICIPALITY_PROFILES[municipalitySlug] : null;
+  const pageSeoMeta = getLaundrySeoForMunicipality(municipalitySlug);
+  const cityLabel = municipalityProfile ? municipalityProfile.name : 'Castellón';
 
   // Form state
   const [clientType, setClientType] = useState<'hoteles' | 'pisos_turisticos' | 'gimnasios' | 'clinicas'>('pisos_turisticos');
@@ -61,18 +73,18 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Scroll to top and update SEO tags
+  // Scroll to top and update SEO tags when route municipality changes
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     updatePageSeo({
-      title: LAUNDRY_SEO.title,
-      description: LAUNDRY_SEO.description,
-      path: LAUNDRY_SEO.canonicalPath,
-      image: LAUNDRY_SEO.image,
-      robots: LAUNDRY_SEO.robots
+      title: pageSeoMeta.title,
+      description: pageSeoMeta.description,
+      path: pageSeoMeta.canonicalPath,
+      image: pageSeoMeta.image,
+      robots: pageSeoMeta.robots
     });
-  }, []);
+  }, [pageSeoMeta]);
 
   const toggleGarment = (id: string) => {
     setSelectedGarments(prev => 
@@ -87,6 +99,7 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
     // Prepare lead data
     const leadPayload = {
       tipo: 'lavanderia_industrial_b2b',
+      municipio: cityLabel,
       sector: clientType,
       prendas: selectedGarments,
       volumen: estimatedVolume,
@@ -124,31 +137,35 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "DryCleaningOrLaundry",
-            "name": "Azahar Rentals - Servicio de Lavandería Industrial",
-            "url": "https://www.azaharentals.com/lavanderia-industrial",
+            "name": municipalityProfile
+              ? `Azahar Rentals - Lavandería Industrial en ${municipalityProfile.name}`
+              : "Azahar Rentals - Servicio de Lavandería Industrial en Castellón",
+            "url": `https://www.azaharentals.com${pageSeoMeta.canonicalPath}`,
             "image": "https://www.azaharentals.com/images/industrial_laundry.jpg",
             "telephone": "+34637968999",
             "address": {
               "@type": "PostalAddress",
-              "addressLocality": "Castellón de la Plana",
+              "addressLocality": municipalityProfile ? municipalityProfile.name : "Castellón de la Plana",
               "addressRegion": "Castellón",
               "addressCountry": "ES"
             },
-            "areaServed": [
-              "Castellón de la Plana",
-              "Peñíscola",
-              "Benicàssim",
-              "Benicarló",
-              "Vinaròs",
-              "Oropesa del Mar",
-              "Alcossebre"
-            ],
-            "description": "Lavandería industrial profesional para hoteles, alojamientos turísticos, clínicas privadas y gimnasios. Lavado, secado, planchado y desinfección térmica de sábanas, toallas, batas e uniformes.",
+            "areaServed": municipalityProfile
+              ? [municipalityProfile.name, "Castellón"]
+              : [
+                  "Castellón de la Plana",
+                  "Peñíscola",
+                  "Benicàssim",
+                  "Benicarló",
+                  "Vinaròs",
+                  "Oropesa del Mar",
+                  "Alcossebre"
+                ],
+            "description": pageSeoMeta.description,
             "serviceType": [
-              "Lavandería industrial para hoteles",
-              "Lavandería para pisos turísticos y apartamentos vacacionales",
-              "Lavandería para gimnasios y spas",
-              "Lavandería y desinfección para clínicas privadas y consultas médicas",
+              `Lavandería industrial para hoteles en ${cityLabel}`,
+              `Lavandería para pisos turísticos y apartamentos vacacionales en ${cityLabel}`,
+              `Lavandería para gimnasios y spas en ${cityLabel}`,
+              `Lavandería y desinfección para clínicas privadas en ${cityLabel}`,
               "Planchado industrial y calandrado de sábanas",
               "Higienización y tratamiento de toallas",
               "Lavado y planchado de batas y uniformes laborales"
@@ -162,11 +179,27 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
         currentPage="laundry"
         onOpenLicenseModal={onOpenLicenseModal}
         onOpenCalculator={() => {
-          if (onNavigateToSimulator) onNavigateToSimulator();
+          if (onNavigateToSimulator) {
+            onNavigateToSimulator(municipalityProfile?.marketStatsId, 2, municipalitySlug);
+          }
         }}
-        onNavigateToSimulator={onNavigateToSimulator}
-        onNavigateToLaundry={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        onNavigateToApartments={onNavigateToApartments}
+        onNavigateToSimulator={() => {
+          if (onNavigateToSimulator) {
+            onNavigateToSimulator(municipalityProfile?.marketStatsId, 2, municipalitySlug);
+          }
+        }}
+        onNavigateToLaundry={() => {
+          if (onNavigateToLaundry && municipalitySlug) {
+            onNavigateToLaundry(null);
+          } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }}
+        onNavigateToApartments={(aptId) => {
+          if (onNavigateToApartments) {
+            onNavigateToApartments(aptId, municipalitySlug);
+          }
+        }}
         onNavigateToHome={onNavigateHome}
         onNavigateToAdmin={onNavigateToAdmin}
         onOpenContact={() => {
@@ -185,7 +218,7 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
         {/* Navigation Breadcrumb Bar */}
         <div className="bg-white border-b border-slate-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-            <nav className="flex items-center gap-2 text-xs text-slate-500" aria-label="Breadcrumb">
+            <nav className="flex items-center gap-2 text-xs text-slate-500 flex-wrap" aria-label="Breadcrumb">
               <button 
                 onClick={() => onNavigateHome()}
                 className="hover:text-blue-600 transition-colors flex items-center gap-1 cursor-pointer font-medium"
@@ -194,16 +227,28 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
                 <span>Inicio</span>
               </button>
               <span aria-hidden="true">/</span>
-              <button 
-                onClick={() => onNavigateHome('servicios')}
-                className="hover:text-blue-600 transition-colors cursor-pointer"
+              <a
+                href="/lavanderia-industrial"
+                onClick={(e) => {
+                  if (onNavigateToLaundry) {
+                    e.preventDefault();
+                    onNavigateToLaundry(null);
+                  }
+                }}
+                className={`hover:text-blue-600 transition-colors cursor-pointer ${
+                  !municipalityProfile ? 'text-slate-900 font-semibold' : ''
+                }`}
               >
-                Servicios 360°
-              </button>
-              <span aria-hidden="true">/</span>
-              <span className="text-slate-900 font-semibold" aria-current="page">
-                Lavanderia Industrial B2B
-              </span>
+                Lavandería Industrial Castellón
+              </a>
+              {municipalityProfile && (
+                <>
+                  <span aria-hidden="true">/</span>
+                  <span className="text-slate-900 font-semibold" aria-current="page">
+                    {municipalityProfile.name}
+                  </span>
+                </>
+              )}
             </nav>
           </div>
         </div>
@@ -218,15 +263,27 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
                 
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-900 text-xs font-bold uppercase tracking-wider">
                   <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Servicio Profesional B2B · Castellón & Costa de Azahar</span>
+                  <span>
+                    {municipalityProfile
+                      ? municipalityProfile.laundrySeo.badge
+                      : 'Servicio Profesional B2B · Castellón & Costa de Azahar'}
+                  </span>
                 </div>
 
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                  Lavandería Industrial y Lencería para Hoteles, Pisos Turísticos, Gimnasios y Clínicas
+                  {municipalityProfile
+                    ? municipalityProfile.laundrySeo.h1
+                    : 'Lavandería Industrial y Lencería en Castellón para Hoteles, Pisos Turísticos, Gimnasios y Clínicas'}
                 </h1>
 
                 <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
-                  Garantizamos los máximos estándares de higiene, suavidad y presentación con nuestro servicio integral de <strong>lavado, secado y planchado industrial</strong>. Tratamiento profesional de <strong>sábanas, toallas, batas sanitarias e uniformes</strong> con recogida y entrega puntual puerta a puerta.
+                  {municipalityProfile ? (
+                    municipalityProfile.laundrySeo.subtitle
+                  ) : (
+                    <>
+                      Garantizamos los máximos estándares de higiene, suavidad y presentación en toda la provincia de Castellón con nuestro servicio integral de <strong>lavado, secado y planchado industrial</strong>. Tratamiento profesional de <strong>sábanas, toallas, batas sanitarias e uniformes</strong> con recogida y entrega puntual puerta a puerta.
+                    </>
+                  )}
                 </p>
 
                 {/* Highlights quick list */}
@@ -310,29 +367,82 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
                       Tratamiento especializado de lencería de cama, toallas, batas y vestuario laboral con calandras industriales.
                     </p>
                     <p className="text-xs text-slate-300 mt-1">
-                      Servicio activo en Castellón de la Plana, Peñíscola, Benicàssim, Vinaròs, Benicarló y Oropesa.
+                      {municipalityProfile
+                        ? municipalityProfile.laundrySeo.heroImageCaption
+                        : 'Servicio activo en Castellón de la Plana, Peñíscola, Benicàssim, Vinaròs, Benicarló, Alcossebre y Oropesa.'}
                     </p>
                   </div>
                 </div>
               </div>
 
             </div>
+
+            {/* Municipality Switcher Links for SEO Crawlability */}
+            <nav
+              aria-label="Cobertura de lavandería industrial por municipio en Castellón"
+              className="mt-10 pt-6 border-t border-slate-200/80 flex flex-wrap items-center gap-2"
+            >
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-2">
+                Zonas de servicio:
+              </span>
+              <a
+                href="/lavanderia-industrial"
+                onClick={(e) => {
+                  if (onNavigateToLaundry) {
+                    e.preventDefault();
+                    onNavigateToLaundry(null);
+                  }
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
+                  !municipalitySlug
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                    : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300'
+                }`}
+              >
+                Castellón Provincia
+              </a>
+              {MUNICIPALITY_LIST.map((m) => {
+                const isActive = municipalitySlug === m.slug;
+                return (
+                  <a
+                    key={m.slug}
+                    href={m.laundrySeo.canonicalPath}
+                    onClick={(e) => {
+                      if (onNavigateToLaundry) {
+                        e.preventDefault();
+                        onNavigateToLaundry(m.slug);
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors flex items-center gap-1 ${
+                      isActive
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                        : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300'
+                    }`}
+                  >
+                    <MapPin className={`w-3 h-3 ${isActive ? 'text-white' : 'text-blue-600'}`} />
+                    <span>{m.name}</span>
+                  </a>
+                );
+              })}
+            </nav>
           </div>
         </section>
 
-        {/* SECTION 1: SECTORES Y CLIENTES OBJETIVO (LOS 4 SECTORES PEDIDOS) */}
+        {/* SECTION 1: SECTORES Y CLIENTES OBJETIVO */}
         <section className="py-16 sm:py-20 bg-white border-b border-slate-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             
             <div className="text-center max-w-3xl mx-auto space-y-3 mb-16">
               <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
-                Soluciones B2B por Sector
+                Soluciones B2B en {cityLabel}
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-                Lavandería Industrial Adaptada a tu Tipo de Negocio
+                Lavandería Industrial en {cityLabel} Adaptada a tu Tipo de Negocio
               </h2>
               <p className="text-sm sm:text-base text-slate-600">
-                Cada actividad requiere un protocolo térmico, químico y logístico específico. Diseñamos planes de servicio a la medida de tu volumen y exigencia.
+                {municipalityProfile
+                  ? municipalityProfile.laundrySeo.sectorsHighlight
+                  : 'Cada actividad requiere un protocolo térmico, químico y logístico específico. Diseñamos planes de servicio a la medida de tu volumen y exigencia en Castellón.'}
               </p>
             </div>
 
@@ -710,29 +820,46 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
             </div>
 
             {/* Packaging and logistics banner */}
-            <div className="mt-12 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 rounded-3xl p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-5">
-                <div className="p-4 bg-white/10 rounded-2xl shrink-0">
-                  <Truck className="w-8 h-8 text-cyan-400" />
+            <div className="mt-12 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 rounded-3xl p-8 text-white shadow-xl space-y-6">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex items-center gap-5">
+                  <div className="p-4 bg-white/10 rounded-2xl shrink-0">
+                    <Truck className="w-8 h-8 text-cyan-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold">
+                      {municipalityProfile
+                        ? `Logística con Recogida y Entrega Puerta a Puerta en ${municipalityProfile.name}`
+                        : 'Logística con Recogida y Entrega Puerta a Puerta en Castellón'}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl">
+                      {municipalityProfile
+                        ? municipalityProfile.laundrySeo.logisticsText
+                        : 'Rutas regulares en Castellón de la Plana, Benicàssim, Peñíscola, Oropesa, Vinaròs, Benicarló y Alcossebre. Ropa empaquetada en film reciclable sellado y clasificada con albarán por cliente.'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-lg font-bold">
-                    Logística con Recogida y Entrega Puerta a Puerta
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl">
-                    Rutas regulares en Castellón de la Plana, Benicàssim, Peñíscola, Oropesa, Vinaròs, Benicarló y Alcossebre. Ropa empaquetada en film reciclable sellado y clasificada con albarán por cliente.
-                  </p>
+                <div className="shrink-0 flex items-center gap-3">
+                  <a
+                    href="tel:+34637968999"
+                    className="px-5 py-3 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs transition-colors flex items-center gap-2 shadow-sm"
+                  >
+                    <Phone className="w-4 h-4" />
+                    <span>+34 637 96 89 99</span>
+                  </a>
                 </div>
               </div>
-              <div className="shrink-0 flex items-center gap-3">
-                <a
-                  href="tel:+34637968999"
-                  className="px-5 py-3 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs transition-colors flex items-center gap-2 shadow-sm"
-                >
-                  <Phone className="w-4 h-4" />
-                  <span>+34 637 96 89 99</span>
-                </a>
-              </div>
+
+              {municipalityProfile && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-4 border-t border-white/10">
+                  {municipalityProfile.laundrySeo.localZones.map((zone) => (
+                    <div key={zone} className="flex items-center gap-2 text-xs text-cyan-100 bg-white/5 px-3 py-2 rounded-xl border border-white/10">
+                      <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                      <span>{zone}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
           </div>
@@ -750,10 +877,10 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
                   <span>Sin Compromiso · Respuesta en menos de 2 horas</span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-                  Solicita Presupuesto de Lavandería Industrial
+                  Solicita Presupuesto de Lavandería Industrial en {cityLabel}
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-600">
-                  Cuéntanos las características de tu negocio y te enviaremos una propuesta tarifaria con recogida, lavado, secado, planchado y entrega incluidos.
+                  Cuéntanos las características de tu negocio en {cityLabel} y te enviaremos una propuesta tarifaria con recogida, lavado, secado, planchado y entrega incluidos.
                 </p>
               </div>
 
@@ -986,11 +1113,13 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
             <div className="space-y-4">
               <details className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 group">
                 <summary className="font-bold text-sm text-slate-900 cursor-pointer flex justify-between items-center list-none">
-                  <span>¿Cuál es el tiempo de entrega habitual de la ropa limpia?</span>
+                  <span>¿Cuál es el tiempo de entrega habitual de la ropa limpia en {cityLabel}?</span>
                   <ChevronRight className="w-4 h-4 text-slate-400 group-open:rotate-90 transition-transform" />
                 </summary>
                 <p className="text-xs sm:text-sm text-slate-600 mt-3 pt-3 border-t border-slate-200/60 leading-relaxed">
-                  El tiempo estándar es de <strong>24 a 48 horas</strong> desde la recogida. Para alojamientos turísticos y hoteles con alta rotación en fin de semana disponemos de servicio express programado con recogida matinal y devolución para el siguiente check-in.
+                  {municipalityProfile
+                    ? municipalityProfile.laundrySeo.localFaqAnswer
+                    : 'El tiempo estándar es de 24 a 48 horas desde la recogida en Castellón. Para alojamientos turísticos y hoteles con alta rotación en fin de semana disponemos de servicio express programado con recogida matinal y devolución para el siguiente check-in.'}
                 </p>
               </details>
 
@@ -1016,11 +1145,11 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
 
               <details className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 group">
                 <summary className="font-bold text-sm text-slate-900 cursor-pointer flex justify-between items-center list-none">
-                  <span>¿Hay un volumen mínimo de prendas para contratar el servicio?</span>
+                  <span>¿Hay un volumen mínimo de prendas para contratar el servicio en {cityLabel}?</span>
                   <ChevronRight className="w-4 h-4 text-slate-400 group-open:rotate-90 transition-transform" />
                 </summary>
                 <p className="text-xs sm:text-sm text-slate-600 mt-3 pt-3 border-t border-slate-200/60 leading-relaxed">
-                  No imponemos mínimos mensuales rígidos. Adaptamos las tarifas al volumen real de cada cliente, tanto para un propietario que gestiona 1 o 2 viviendas turísticas como para hoteles o clínicas de gran volumen con recogida diaria fija.
+                  No imponemos mínimos mensuales rígidos. Adaptamos las tarifas al volumen real de cada cliente en {cityLabel}, tanto para un propietario que gestiona 1 o 2 viviendas turísticas como para hoteles o clínicas de gran volumen con recogida diaria fija.
                 </p>
               </details>
             </div>
@@ -1033,9 +1162,23 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
       {/* Shared Footer with direct links */}
       <Footer
         onOpenLicenseModal={onOpenLicenseModal}
-        onOpenSimulator={onNavigateToSimulator}
-        onNavigateToLaundry={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        onNavigateToApartments={onNavigateToApartments}
+        onOpenSimulator={() => {
+          if (onNavigateToSimulator) {
+            onNavigateToSimulator(municipalityProfile?.marketStatsId, 2, municipalitySlug);
+          }
+        }}
+        onNavigateToLaundry={(muniSlug) => {
+          if (onNavigateToLaundry) {
+            onNavigateToLaundry(muniSlug);
+          } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }}
+        onNavigateToApartments={(aptId, muniSlug) => {
+          if (onNavigateToApartments) {
+            onNavigateToApartments(aptId, muniSlug ?? municipalitySlug);
+          }
+        }}
       />
 
     </div>

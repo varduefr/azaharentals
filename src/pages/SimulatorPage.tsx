@@ -15,57 +15,79 @@ import { Footer } from '../components/Footer';
 import { useTheme } from '../context/ThemeContext';
 import { MUNICIPALITIES_MARKET_DATA } from '../data/marketStats';
 import { updatePageSeo } from '../utils/seo';
-import { SIMULATOR_SEO } from '../seo/routeMeta';
+import { getSimulatorSeoForMunicipality } from '../seo/routeMeta';
+import {
+  MUNICIPALITY_LIST,
+  MUNICIPALITY_PROFILES,
+  MunicipalitySlug,
+} from '../data/municipalitySeoData';
 
 interface SimulatorPageProps {
   initialLocation?: string;
   initialBedrooms?: number;
+  municipalitySlug?: MunicipalitySlug | null;
   onNavigateHome: (sectionId?: string) => void;
   onOpenLicenseModal: () => void;
   onOpenContact: (data?: any) => void;
   onNavigateToAdmin?: () => void;
-  onNavigateToLaundry?: () => void;
-  onNavigateToApartments?: (apartmentId?: string) => void;
+  onNavigateToLaundry?: (municipalitySlug?: MunicipalitySlug | null) => void;
+  onNavigateToApartments?: (apartmentId?: string, municipalitySlug?: MunicipalitySlug | null) => void;
+  onNavigateToSimulator?: (location?: string, bedrooms?: number, municipalitySlug?: MunicipalitySlug | null) => void;
 }
 
 export const SimulatorPage: React.FC<SimulatorPageProps> = ({
   initialLocation = 'peniscola',
   initialBedrooms = 2,
+  municipalitySlug = null,
   onNavigateHome,
   onOpenLicenseModal,
   onOpenContact,
   onNavigateToAdmin,
   onNavigateToLaundry,
-  onNavigateToApartments
+  onNavigateToApartments,
+  onNavigateToSimulator
 }) => {
   const { currentTheme } = useTheme();
+  const municipalityProfile = municipalitySlug ? MUNICIPALITY_PROFILES[municipalitySlug] : null;
+  const pageSeoMeta = getSimulatorSeoForMunicipality(municipalitySlug);
+  const resolvedLocation = municipalityProfile?.marketStatsId || initialLocation;
 
-  // Scroll to top and update document title & SEO metadata on mount
+  // Scroll to top and update document title & SEO metadata on mount / route change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
     updatePageSeo({
-      title: SIMULATOR_SEO.title,
-      description: SIMULATOR_SEO.description,
-      path: SIMULATOR_SEO.canonicalPath,
-      image: SIMULATOR_SEO.image,
-      robots: SIMULATOR_SEO.robots
+      title: pageSeoMeta.title,
+      description: pageSeoMeta.description,
+      path: pageSeoMeta.canonicalPath,
+      image: pageSeoMeta.image,
+      robots: pageSeoMeta.robots
     });
-  }, []);
+  }, [pageSeoMeta]);
 
   const municipalityList = Object.values(MUNICIPALITIES_MARKET_DATA);
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col selection:bg-cyan-600 selection:text-white">
       
-      {/* Top Header - Exact same Navbar as the main page with announcement bar, phone, lang dropdown, logo and menu */}
+      {/* Top Header - Exact same Navbar as the main page */}
       <Navbar
         currentPage="simulator"
         onOpenLicenseModal={onOpenLicenseModal}
         onOpenCalculator={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        onNavigateToSimulator={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        onNavigateToLaundry={onNavigateToLaundry}
-        onNavigateToApartments={onNavigateToApartments}
+        onNavigateToSimulator={() => {
+          if (onNavigateToSimulator && municipalitySlug) {
+            onNavigateToSimulator(undefined, 2, null);
+          } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }}
+        onNavigateToLaundry={() => {
+          if (onNavigateToLaundry) onNavigateToLaundry(municipalitySlug);
+        }}
+        onNavigateToApartments={(aptId) => {
+          if (onNavigateToApartments) onNavigateToApartments(aptId, municipalitySlug);
+        }}
         onNavigateToHome={onNavigateHome}
         onNavigateToAdmin={onNavigateToAdmin}
         onOpenContact={() => onOpenContact()}
@@ -74,7 +96,7 @@ export const SimulatorPage: React.FC<SimulatorPageProps> = ({
       {/* Navigation Breadcrumb Bar */}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <nav className="flex items-center gap-2 text-xs text-slate-500" aria-label="Breadcrumb">
+          <nav className="flex items-center gap-2 text-xs text-slate-500 flex-wrap" aria-label="Breadcrumb">
             <button 
               type="button"
               onClick={() => onNavigateHome()}
@@ -84,17 +106,28 @@ export const SimulatorPage: React.FC<SimulatorPageProps> = ({
               <span>Inicio</span>
             </button>
             <span aria-hidden="true">/</span>
-            <button 
-              type="button"
-              onClick={() => onNavigateHome('servicios')}
-              className="hover:text-blue-600 transition-colors cursor-pointer"
+            <a
+              href="/simulador"
+              onClick={(e) => {
+                if (onNavigateToSimulator) {
+                  e.preventDefault();
+                  onNavigateToSimulator(undefined, 2, null);
+                }
+              }}
+              className={`hover:text-blue-600 transition-colors cursor-pointer ${
+                !municipalityProfile ? 'text-slate-900 font-semibold' : ''
+              }`}
             >
-              Servicios 360°
-            </button>
-            <span aria-hidden="true">/</span>
-            <span className="text-slate-900 font-semibold" aria-current="page">
-              Simulador de Rentabilidad
-            </span>
+              Simulador de Rentabilidad Castellón
+            </a>
+            {municipalityProfile && (
+              <>
+                <span aria-hidden="true">/</span>
+                <span className="text-slate-900 font-semibold" aria-current="page">
+                  {municipalityProfile.name}
+                </span>
+              </>
+            )}
           </nav>
         </div>
       </div>
@@ -122,17 +155,78 @@ export const SimulatorPage: React.FC<SimulatorPageProps> = ({
               }}
             >
               <Calculator className="w-4 h-4" style={{ color: currentTheme.colors.accent }} />
-              <span>Herramienta Oficial para Propietarios</span>
+              <span>
+                {municipalityProfile
+                  ? municipalityProfile.simulatorSeo.badge
+                  : 'Herramienta Oficial para Propietarios'}
+              </span>
             </div>
 
             {/* Single H1 on page */}
             <h1 className={`text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight ${currentTheme.typography.headingFontClass}`}>
-              Simulador Interactivo de Rentabilidad 2025 / 2026: Alquiler Vacacional en Castellón
+              {municipalityProfile
+                ? municipalityProfile.simulatorSeo.h1
+                : 'Simulador Interactivo de Rentabilidad 2025 / 2026: Alquiler Vacacional en Castellón'}
             </h1>
 
             <p className="text-base sm:text-lg text-slate-300 leading-relaxed max-w-3xl mx-auto">
-              Calcula con precisión matemática los ingresos brutos y netos anuales de tu vivienda en la Costa de Azahar. Algoritmo calibrado con <strong>estadísticas reales de AirDNA y Turisme Comunitat Valenciana</strong>, discriminando ADR por temporada y número de habitaciones.
+              {municipalityProfile ? (
+                <>
+                  {municipalityProfile.simulatorSeo.subtitle}{' '}
+                  <strong className="text-cyan-300">{municipalityProfile.simulatorSeo.localHighlight}</strong>
+                </>
+              ) : (
+                <>
+                  Calcula con precisión matemática los ingresos brutos y netos anuales de tu vivienda en la Costa de Azahar. Algoritmo calibrado con <strong>estadísticas reales de AirDNA y Turisme Comunitat Valenciana</strong>, discriminando ADR por temporada y número de habitaciones.
+                </>
+              )}
             </p>
+
+            {/* Municipality Switcher */}
+            <nav
+              aria-label="Simulador de rentabilidad por municipio de Castellón"
+              className="pt-3 flex flex-wrap justify-center gap-2"
+            >
+              <a
+                href="/simulador"
+                onClick={(e) => {
+                  if (onNavigateToSimulator) {
+                    e.preventDefault();
+                    onNavigateToSimulator('peniscola', 2, null);
+                  }
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
+                  !municipalitySlug
+                    ? 'bg-cyan-500 text-slate-950 border-cyan-400'
+                    : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:text-white'
+                }`}
+              >
+                Toda Castellón
+              </a>
+              {MUNICIPALITY_LIST.map((m) => {
+                const isActive = municipalitySlug === m.slug;
+                return (
+                  <a
+                    key={m.slug}
+                    href={m.simulatorSeo.canonicalPath}
+                    onClick={(e) => {
+                      if (onNavigateToSimulator) {
+                        e.preventDefault();
+                        onNavigateToSimulator(m.marketStatsId, 2, m.slug);
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors flex items-center gap-1 ${
+                      isActive
+                        ? 'bg-cyan-500 text-slate-950 border-cyan-400'
+                        : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:text-white'
+                    }`}
+                  >
+                    <MapPin className={`w-3 h-3 ${isActive ? 'text-slate-950' : 'text-cyan-400'}`} />
+                    <span>{m.name}</span>
+                  </a>
+                );
+              })}
+            </nav>
 
             {/* Key trust bullets */}
             <div className="pt-2 flex flex-wrap justify-center gap-3 sm:gap-6 text-xs text-slate-300">
@@ -160,8 +254,8 @@ export const SimulatorPage: React.FC<SimulatorPageProps> = ({
         {/* The Revenue Simulator Component */}
         <div className="relative">
           <RevenueSimulator
-            key={`${initialLocation}-${initialBedrooms}`}
-            initialLocation={initialLocation}
+            key={`${resolvedLocation}-${initialBedrooms}`}
+            initialLocation={resolvedLocation}
             initialBedrooms={initialBedrooms}
             onOpenLicenseModal={onOpenLicenseModal}
             onOpenContact={onOpenContact}
@@ -307,9 +401,19 @@ export const SimulatorPage: React.FC<SimulatorPageProps> = ({
       {/* Footer */}
       <Footer 
         onOpenLicenseModal={onOpenLicenseModal} 
-        onOpenSimulator={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        onNavigateToLaundry={onNavigateToLaundry}
-        onNavigateToApartments={onNavigateToApartments}
+        onOpenSimulator={() => {
+          if (onNavigateToSimulator && municipalitySlug) {
+            onNavigateToSimulator(undefined, 2, null);
+          } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }}
+        onNavigateToLaundry={(muniSlug) => {
+          if (onNavigateToLaundry) onNavigateToLaundry(muniSlug ?? municipalitySlug);
+        }}
+        onNavigateToApartments={(aptId, muniSlug) => {
+          if (onNavigateToApartments) onNavigateToApartments(aptId, muniSlug ?? municipalitySlug);
+        }}
       />
 
     </div>

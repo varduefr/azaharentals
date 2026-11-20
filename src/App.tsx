@@ -20,59 +20,107 @@ import { AdminView } from './components/admin/AdminView';
 import { updatePageSeo } from './utils/seo';
 import {
   ADMIN_SEO,
-  APARTMENTS_SEO,
   DEFAULT_HOME_SEO,
-  LAUNDRY_SEO,
-  SIMULATOR_SEO,
+  getApartmentsSeoForMunicipality,
+  getLaundrySeoForMunicipality,
+  getSimulatorSeoForMunicipality,
 } from './seo/routeMeta';
+import {
+  MUNICIPALITY_PROFILES,
+  MunicipalitySlug,
+  normalizeSlugText,
+  resolveMunicipalitySlug,
+} from './data/municipalitySeoData';
 
 type AppPage = 'home' | 'simulator' | 'admin' | 'laundry' | 'apartments';
+
+function safeDecode(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
 
 function resolveRouteFromLocation(): {
   page: AppPage;
   apartmentId: string | null;
+  municipalitySlug: MunicipalitySlug | null;
   town?: string;
   bedrooms?: number;
 } {
   if (typeof window === 'undefined') {
-    return { page: 'home', apartmentId: null };
+    return { page: 'home', apartmentId: null, municipalitySlug: null };
   }
 
-  const pathname = window.location.pathname;
+  const decodedPathname = safeDecode(window.location.pathname).replace(/\/+$/, '') || '/';
+  const normPath = normalizeSlugText(decodedPathname);
   const hash = window.location.hash;
   const searchParams = new URLSearchParams(window.location.search);
 
   // 1. Pathname check takes absolute precedence over hash
-  if (pathname === '/admin' || pathname.startsWith('/admin')) {
-    return { page: 'admin', apartmentId: null };
+  if (normPath === '/admin' || normPath.startsWith('/admin/')) {
+    return { page: 'admin', apartmentId: null, municipalitySlug: null };
+  }
+
+  // Industrial Laundry routes: /lavanderia-industrial & /lavanderia-industrial-<municipio>
+  if (normPath.startsWith('/lavanderia-industrial-')) {
+    const rawMuni = normPath.slice('/lavanderia-industrial-'.length).split('/')[0];
+    const muniSlug = rawMuni === 'castellon' ? null : resolveMunicipalitySlug(rawMuni);
+    return { page: 'laundry', apartmentId: null, municipalitySlug: muniSlug };
   }
   if (
-    pathname === '/lavanderia-industrial' ||
-    pathname.startsWith('/lavanderia-industrial') ||
-    pathname === '/laundry' ||
-    pathname.startsWith('/laundry')
+    normPath === '/lavanderia-industrial' ||
+    normPath.startsWith('/lavanderia-industrial/') ||
+    normPath === '/laundry' ||
+    normPath.startsWith('/laundry/')
   ) {
-    return { page: 'laundry', apartmentId: null };
+    return { page: 'laundry', apartmentId: null, municipalitySlug: null };
   }
-  if (
-    pathname === '/apartamentos-turisticos-castellon' ||
-    pathname.startsWith('/apartamentos-turisticos-castellon') ||
-    pathname === '/apartamentos' ||
-    pathname.startsWith('/apartamentos')
-  ) {
+
+  // Tourist Apartments routes: /apartamentos-turisticos-castellon & /apartamentos-turisticos-<municipio>
+  if (normPath.startsWith('/apartamentos-turisticos-')) {
+    const rawMuni = normPath.slice('/apartamentos-turisticos-'.length).split('/')[0];
+    const muniSlug = rawMuni === 'castellon' ? null : resolveMunicipalitySlug(rawMuni);
     const aptId = searchParams.get('id') || searchParams.get('apt');
-    return { page: 'apartments', apartmentId: aptId };
+    return { page: 'apartments', apartmentId: aptId, municipalitySlug: muniSlug };
   }
-  if (
-    pathname === '/simulador' ||
-    pathname.startsWith('/simulador') ||
-    pathname === '/simulador-rentabilidad'
-  ) {
+  if (normPath === '/apartamentos' || normPath.startsWith('/apartamentos/')) {
+    const aptId = searchParams.get('id') || searchParams.get('apt');
+    return { page: 'apartments', apartmentId: aptId, municipalitySlug: null };
+  }
+
+  // Simulator routes: /simulador & /simulador-<municipio>
+  if (normPath === '/simulador-rentabilidad' || normPath.startsWith('/simulador-rentabilidad/')) {
     const muni = searchParams.get('muni') || searchParams.get('town') || undefined;
     const hab = searchParams.get('hab') || searchParams.get('bedrooms');
     return {
       page: 'simulator',
       apartmentId: null,
+      municipalitySlug: null,
+      town: muni,
+      bedrooms: hab ? Number(hab) || 2 : undefined,
+    };
+  }
+  if (normPath.startsWith('/simulador-')) {
+    const rawMuni = normPath.slice('/simulador-'.length).split('/')[0];
+    const muniSlug = rawMuni === 'castellon' ? null : resolveMunicipalitySlug(rawMuni);
+    const hab = searchParams.get('hab') || searchParams.get('bedrooms');
+    return {
+      page: 'simulator',
+      apartmentId: null,
+      municipalitySlug: muniSlug,
+      town: muniSlug ? MUNICIPALITY_PROFILES[muniSlug].marketStatsId : undefined,
+      bedrooms: hab ? Number(hab) || 2 : undefined,
+    };
+  }
+  if (normPath === '/simulador' || normPath.startsWith('/simulador/')) {
+    const muni = searchParams.get('muni') || searchParams.get('town') || undefined;
+    const hab = searchParams.get('hab') || searchParams.get('bedrooms');
+    return {
+      page: 'simulator',
+      apartmentId: null,
+      municipalitySlug: null,
       town: muni,
       bedrooms: hab ? Number(hab) || 2 : undefined,
     };
@@ -80,7 +128,7 @@ function resolveRouteFromLocation(): {
 
   // 2. Fallbacks for query params or hash routing
   if (hash === '#/admin' || hash === '#admin' || searchParams.get('page') === 'admin') {
-    return { page: 'admin', apartmentId: null };
+    return { page: 'admin', apartmentId: null, municipalitySlug: null };
   }
   if (
     hash === '#/lavanderia-industrial' ||
@@ -90,7 +138,7 @@ function resolveRouteFromLocation(): {
     searchParams.get('page') === 'laundry' ||
     searchParams.get('page') === 'lavanderia-industrial'
   ) {
-    return { page: 'laundry', apartmentId: null };
+    return { page: 'laundry', apartmentId: null, municipalitySlug: null };
   }
   if (
     hash === '#/apartamentos-turisticos-castellon' ||
@@ -99,7 +147,7 @@ function resolveRouteFromLocation(): {
     searchParams.get('page') === 'apartamentos-turisticos-castellon'
   ) {
     const aptId = searchParams.get('id') || searchParams.get('apt');
-    return { page: 'apartments', apartmentId: aptId };
+    return { page: 'apartments', apartmentId: aptId, municipalitySlug: null };
   }
   if (hash === '#/simulador' || hash === '#simulador' || searchParams.get('page') === 'simulador') {
     const muni = searchParams.get('muni') || searchParams.get('town') || undefined;
@@ -107,33 +155,40 @@ function resolveRouteFromLocation(): {
     return {
       page: 'simulator',
       apartmentId: null,
+      municipalitySlug: null,
       town: muni,
       bedrooms: hab ? Number(hab) || 2 : undefined,
     };
   }
 
-  return { page: 'home', apartmentId: null };
+  return { page: 'home', apartmentId: null, municipalitySlug: null };
 }
 
 export default function App() {
   const initialRoute = resolveRouteFromLocation();
   const [currentPage, setCurrentPage] = useState<AppPage>(initialRoute.page);
   const [selectedApartmentId, setSelectedApartmentId] = useState<string | null>(initialRoute.apartmentId);
+  const [routeMunicipality, setRouteMunicipality] = useState<MunicipalitySlug | null>(
+    initialRoute.municipalitySlug
+  );
   const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
   const [selectedTown, setSelectedTown] = useState(initialRoute.town || 'peniscola');
   const [selectedBedrooms, setSelectedBedrooms] = useState(initialRoute.bedrooms || 2);
   const [contactInitialData, setContactInitialData] = useState<any>(null);
 
-  // Sync SEO metadata whenever currentPage changes
+  // Sync SEO metadata whenever currentPage or routeMunicipality changes
   useEffect(() => {
-    const seoMap: Record<AppPage, typeof DEFAULT_HOME_SEO> = {
-      home: DEFAULT_HOME_SEO,
-      apartments: APARTMENTS_SEO,
-      laundry: LAUNDRY_SEO,
-      simulator: SIMULATOR_SEO,
-      admin: ADMIN_SEO,
-    };
-    const seo = seoMap[currentPage];
+    const seo =
+      currentPage === 'apartments'
+        ? getApartmentsSeoForMunicipality(routeMunicipality)
+        : currentPage === 'laundry'
+        ? getLaundrySeoForMunicipality(routeMunicipality)
+        : currentPage === 'simulator'
+        ? getSimulatorSeoForMunicipality(routeMunicipality)
+        : currentPage === 'admin'
+        ? ADMIN_SEO
+        : DEFAULT_HOME_SEO;
+
     updatePageSeo({
       title: seo.title,
       description: seo.description,
@@ -141,7 +196,7 @@ export default function App() {
       image: seo.image,
       robots: seo.robots,
     });
-  }, [currentPage]);
+  }, [currentPage, routeMunicipality]);
 
   // Listen to browser back/forward buttons and popstate
   useEffect(() => {
@@ -149,6 +204,7 @@ export default function App() {
       const resolved = resolveRouteFromLocation();
       setCurrentPage(resolved.page);
       setSelectedApartmentId(resolved.apartmentId);
+      setRouteMunicipality(resolved.municipalitySlug);
       if (resolved.town) setSelectedTown(resolved.town);
       if (resolved.bedrooms) setSelectedBedrooms(resolved.bedrooms);
     };
@@ -168,6 +224,7 @@ export default function App() {
   }, []);
 
   const navigateToAdmin = () => {
+    setRouteMunicipality(null);
     setCurrentPage('admin');
     try {
       window.history.pushState({ page: 'admin' }, '', '/admin');
@@ -178,46 +235,65 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const navigateToLaundry = () => {
+  const navigateToLaundry = (municipalitySlug?: MunicipalitySlug | null) => {
+    const targetMuni = municipalitySlug ?? null;
+    const targetUrl = targetMuni ? `/lavanderia-industrial-${targetMuni}` : '/lavanderia-industrial';
+    setRouteMunicipality(targetMuni);
     setCurrentPage('laundry');
     try {
-      window.history.pushState({ page: 'laundry' }, '', '/lavanderia-industrial');
+      window.history.pushState({ page: 'laundry', municipalitySlug: targetMuni }, '', targetUrl);
       window.dispatchEvent(new PopStateEvent('popstate'));
     } catch {
-      window.location.hash = '#/lavanderia-industrial';
+      window.location.hash = `#${targetUrl}`;
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const navigateToApartments = (apartmentId?: string) => {
+  const navigateToApartments = (apartmentId?: string, municipalitySlug?: MunicipalitySlug | null) => {
+    const targetMuni = municipalitySlug ?? null;
+    const basePath = targetMuni ? `/apartamentos-turisticos-${targetMuni}` : '/apartamentos-turisticos-castellon';
     setSelectedApartmentId(apartmentId || null);
+    setRouteMunicipality(targetMuni);
     setCurrentPage('apartments');
     try {
       const targetUrl = apartmentId
-        ? `/apartamentos-turisticos-castellon?id=${encodeURIComponent(apartmentId)}`
-        : '/apartamentos-turisticos-castellon';
-      window.history.pushState({ page: 'apartments', apartmentId }, '', targetUrl);
+        ? `${basePath}?id=${encodeURIComponent(apartmentId)}`
+        : basePath;
+      window.history.pushState({ page: 'apartments', apartmentId, municipalitySlug: targetMuni }, '', targetUrl);
       window.dispatchEvent(new PopStateEvent('popstate'));
     } catch {
       window.location.hash = apartmentId
-        ? `#/apartamentos-turisticos-castellon?id=${encodeURIComponent(apartmentId)}`
-        : '#/apartamentos-turisticos-castellon';
+        ? `#${basePath}?id=${encodeURIComponent(apartmentId)}`
+        : `#${basePath}`;
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const navigateToSimulator = (location?: string, bedrooms?: number) => {
+  const navigateToSimulator = (
+    location?: string,
+    bedrooms?: number,
+    municipalitySlug?: MunicipalitySlug | null
+  ) => {
+    const targetMuni = municipalitySlug ?? null;
     if (location) setSelectedTown(location);
+    else if (targetMuni) setSelectedTown(MUNICIPALITY_PROFILES[targetMuni].marketStatsId);
     if (bedrooms) setSelectedBedrooms(bedrooms);
 
-    const locToUse = location || selectedTown;
+    const locToUse = location || (targetMuni ? MUNICIPALITY_PROFILES[targetMuni].marketStatsId : selectedTown);
     const bedToUse = bedrooms || selectedBedrooms;
 
+    setRouteMunicipality(targetMuni);
     setCurrentPage('simulator');
 
     try {
-      const targetUrl = `/simulador?muni=${encodeURIComponent(locToUse)}&hab=${bedToUse}`;
-      window.history.pushState({ page: 'simulator', town: locToUse, bedrooms: bedToUse }, '', targetUrl);
+      const targetUrl = targetMuni
+        ? `/simulador-${targetMuni}`
+        : `/simulador?muni=${encodeURIComponent(locToUse)}&hab=${bedToUse}`;
+      window.history.pushState(
+        { page: 'simulator', town: locToUse, bedrooms: bedToUse, municipalitySlug: targetMuni },
+        '',
+        targetUrl
+      );
       window.dispatchEvent(new PopStateEvent('popstate'));
     } catch {
       window.location.hash = '#/simulador';
@@ -227,6 +303,7 @@ export default function App() {
   };
 
   const navigateToHome = (sectionId?: string) => {
+    setRouteMunicipality(null);
     setCurrentPage('home');
 
     try {
@@ -281,30 +358,36 @@ export default function App() {
         <SimulatorPage
           initialLocation={selectedTown}
           initialBedrooms={selectedBedrooms}
+          municipalitySlug={routeMunicipality}
           onNavigateHome={navigateToHome}
           onNavigateToAdmin={navigateToAdmin}
           onNavigateToLaundry={navigateToLaundry}
           onNavigateToApartments={navigateToApartments}
+          onNavigateToSimulator={navigateToSimulator}
           onOpenLicenseModal={() => setIsLicenseModalOpen(true)}
           onOpenContact={handleOpenContact}
         />
       ) : currentPage === 'laundry' ? (
-        /* 3. Dedicated Industrial Laundry Page (/lavanderia-industrial) */
+        /* 3. Dedicated Industrial Laundry Page (/lavanderia-industrial & /lavanderia-industrial-<muni>) */
         <LaundryPage
+          municipalitySlug={routeMunicipality}
           onNavigateHome={navigateToHome}
-          onNavigateToSimulator={() => navigateToSimulator()}
+          onNavigateToSimulator={navigateToSimulator}
           onNavigateToAdmin={navigateToAdmin}
           onNavigateToApartments={navigateToApartments}
+          onNavigateToLaundry={navigateToLaundry}
           onOpenLicenseModal={() => setIsLicenseModalOpen(true)}
           onOpenContact={handleOpenContact}
         />
       ) : currentPage === 'apartments' ? (
-        /* 4. Dedicated Tourist Apartments Page (/apartamentos-turisticos-castellon) */
+        /* 4. Dedicated Tourist Apartments Page (/apartamentos-turisticos-castellon & /apartamentos-turisticos-<muni>) */
         <ApartmentsPage
           initialApartmentId={selectedApartmentId}
+          municipalitySlug={routeMunicipality}
           onNavigateHome={navigateToHome}
-          onNavigateToSimulator={() => navigateToSimulator()}
+          onNavigateToSimulator={navigateToSimulator}
           onNavigateToLaundry={navigateToLaundry}
+          onNavigateToApartments={navigateToApartments}
           onNavigateToAdmin={navigateToAdmin}
           onOpenLicenseModal={() => setIsLicenseModalOpen(true)}
           onOpenContact={handleOpenContact}
@@ -359,8 +442,12 @@ export default function App() {
 
             {/* 5. Costa de Castellón Locations & Beaches Showcase (Vinaròs, Benicarló, Peñíscola, Oropesa, etc.) */}
             <CastellonLocationsSection
-              onSelectTownForSimulation={(townId) => navigateToSimulator(townId, 2)}
+              onSelectTownForSimulation={(townId) =>
+                navigateToSimulator(townId, 2, resolveMunicipalitySlug(townId))
+              }
               onOpenLicenseModal={() => setIsLicenseModalOpen(true)}
+              onNavigateToApartments={navigateToApartments}
+              onNavigateToLaundry={navigateToLaundry}
             />
 
             {/* 6. Why Us & 3-Way Comparison Table (Azahar vs Particular vs Tradicional) */}

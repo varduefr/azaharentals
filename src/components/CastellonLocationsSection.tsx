@@ -12,20 +12,25 @@ import {
   Sparkles
 } from 'lucide-react';
 import { LOCATIONS_DATA } from '../data/locations';
-import { LocationData } from '../types';
+import { MunicipalitySlug, resolveMunicipalitySlug } from '../data/municipalitySeoData';
 
 interface CastellonLocationsSectionProps {
   onSelectTownForSimulation: (townId: string) => void;
   onOpenLicenseModal: () => void;
+  onNavigateToApartments?: (apartmentId?: string, municipalitySlug?: MunicipalitySlug | null) => void;
+  onNavigateToLaundry?: (municipalitySlug?: MunicipalitySlug | null) => void;
 }
 
 export const CastellonLocationsSection: React.FC<CastellonLocationsSectionProps> = ({
   onSelectTownForSimulation,
-  onOpenLicenseModal
+  onOpenLicenseModal,
+  onNavigateToApartments,
+  onNavigateToLaundry
 }) => {
   const [activeTab, setActiveTab] = useState<string>('peniscola');
 
   const activeTown = LOCATIONS_DATA.find(l => l.id === activeTab) || LOCATIONS_DATA[0];
+  const activeMunicipalitySlug = resolveMunicipalitySlug(activeTown.id);
 
   return (
     <section id="destinos" className="py-20 bg-white relative">
@@ -182,21 +187,53 @@ export const CastellonLocationsSection: React.FC<CastellonLocationsSectionProps>
             </div>
 
             {/* CTAs */}
-            <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center gap-3">
+            <div className="pt-4 border-t border-slate-800 flex flex-wrap items-center gap-3">
               <button
                 onClick={() => onSelectTownForSimulation(activeTown.id)}
-                className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <TrendingUp className="w-4 h-4" />
-                <span>Simular Ingresos en {activeTown.name}</span>
+                <span>Simulador en {activeTown.name}</span>
               </button>
+
+              {activeMunicipalitySlug && (
+                <>
+                  <a
+                    href={`/apartamentos-turisticos-${activeMunicipalitySlug}`}
+                    onClick={(e) => {
+                      if (onNavigateToApartments) {
+                        e.preventDefault();
+                        onNavigateToApartments(undefined, activeMunicipalitySlug);
+                      }
+                    }}
+                    className="w-full sm:w-auto px-4 py-3 bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer border border-slate-700"
+                  >
+                    <Building2 className="w-3.5 h-3.5" />
+                    <span>Apartamentos en {activeTown.name}</span>
+                  </a>
+
+                  <a
+                    href={`/lavanderia-industrial-${activeMunicipalitySlug}`}
+                    onClick={(e) => {
+                      if (onNavigateToLaundry) {
+                        e.preventDefault();
+                        onNavigateToLaundry(activeMunicipalitySlug);
+                      }
+                    }}
+                    className="w-full sm:w-auto px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer border border-slate-700"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Lavandería {activeTown.name}</span>
+                  </a>
+                </>
+              )}
 
               <a
                 href="#contacto"
                 aria-label={`Ir a la sección Estudio de Rentabilidad y Licencia Gratuito para pedir Licencia en ${activeTown.name}`}
                 className="w-full sm:w-auto px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <span>Pedir Licencia en {activeTown.name}</span>
+                <span>Pedir Licencia</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </a>
             </div>

@@ -1,3 +1,11 @@
+import {
+  MUNICIPALITY_LIST,
+  MUNICIPALITY_PROFILES,
+  MunicipalitySlug,
+  normalizeSlugText,
+  resolveMunicipalitySlug,
+} from '../data/municipalitySeoData';
+
 export const BASE_CANONICAL_DOMAIN = 'https://www.azaharentals.com';
 
 export interface RouteSeoMeta {
@@ -31,7 +39,7 @@ export const LAUNDRY_SEO: RouteSeoMeta = {
   title: 'Lavandería Industrial en Castellón | Hoteles, Pisos Turísticos, Clínicas y Gimnasios | Azahar Rentals',
   description:
     'Servicio de lavandería industrial en Castellón para hoteles, apartamentos turísticos, gimnasios y clínicas privadas. Limpieza de sábanas, toallas, batas y uniformes con lavado, secado y planchado calandra.',
-  image: `${BASE_CANONICAL_DOMAIN}/images/castellon_hero_1788275752376.jpg`,
+  image: `${BASE_CANONICAL_DOMAIN}/images/industrial_laundry.jpg`,
   robots: 'index, follow',
 };
 
@@ -52,6 +60,59 @@ export const ADMIN_SEO: RouteSeoMeta = {
   robots: 'noindex, nofollow',
 };
 
+export function getApartmentsSeoForMunicipality(slug?: MunicipalitySlug | null): RouteSeoMeta {
+  if (!slug || !MUNICIPALITY_PROFILES[slug]) return APARTMENTS_SEO;
+  const s = MUNICIPALITY_PROFILES[slug].apartmentsSeo;
+  return {
+    canonicalPath: s.canonicalPath,
+    title: s.title,
+    description: s.description,
+    image: s.image,
+    robots: 'index, follow',
+  };
+}
+
+export function getLaundrySeoForMunicipality(slug?: MunicipalitySlug | null): RouteSeoMeta {
+  if (!slug || !MUNICIPALITY_PROFILES[slug]) return LAUNDRY_SEO;
+  const s = MUNICIPALITY_PROFILES[slug].laundrySeo;
+  return {
+    canonicalPath: s.canonicalPath,
+    title: s.title,
+    description: s.description,
+    image: s.image,
+    robots: 'index, follow',
+  };
+}
+
+export function getSimulatorSeoForMunicipality(slug?: MunicipalitySlug | null): RouteSeoMeta {
+  if (!slug || !MUNICIPALITY_PROFILES[slug]) return SIMULATOR_SEO;
+  const s = MUNICIPALITY_PROFILES[slug].simulatorSeo;
+  return {
+    canonicalPath: s.canonicalPath,
+    title: s.title,
+    description: s.description,
+    image: s.image,
+    robots: 'index, follow',
+  };
+}
+
+const MUNICIPALITY_PRERENDER_FILES: Array<{ filename: string; meta: RouteSeoMeta }> = MUNICIPALITY_LIST.flatMap(
+  (m) => [
+    {
+      filename: `apartamentos-turisticos-${m.slug}.html`,
+      meta: getApartmentsSeoForMunicipality(m.slug),
+    },
+    {
+      filename: `lavanderia-industrial-${m.slug}.html`,
+      meta: getLaundrySeoForMunicipality(m.slug),
+    },
+    {
+      filename: `simulador-${m.slug}.html`,
+      meta: getSimulatorSeoForMunicipality(m.slug),
+    },
+  ]
+);
+
 export const PRERENDER_ROUTE_FILES: Array<{ filename: string; meta: RouteSeoMeta }> = [
   { filename: 'apartamentos-turisticos-castellon.html', meta: APARTMENTS_SEO },
   { filename: 'apartamentos.html', meta: APARTMENTS_SEO },
@@ -60,36 +121,73 @@ export const PRERENDER_ROUTE_FILES: Array<{ filename: string; meta: RouteSeoMeta
   { filename: 'simulador.html', meta: SIMULATOR_SEO },
   { filename: 'simulador-rentabilidad.html', meta: SIMULATOR_SEO },
   { filename: 'admin.html', meta: ADMIN_SEO },
+  ...MUNICIPALITY_PRERENDER_FILES,
 ];
 
-export function getRouteSeoForPath(pathname: string): RouteSeoMeta {
-  const cleanPath = (pathname || '/').split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+function safeDecodePath(pathname: string): string {
+  const raw = (pathname || '/').split('?')[0].split('#')[0];
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
 
-  if (cleanPath === '/admin' || cleanPath.startsWith('/admin/')) {
+export function getRouteSeoForPath(pathname: string): RouteSeoMeta {
+  const decoded = safeDecodePath(pathname).replace(/\/+$/, '') || '/';
+  const normPath = normalizeSlugText(decoded);
+
+  if (normPath === '/admin' || normPath.startsWith('/admin/')) {
     return ADMIN_SEO;
   }
+
+  // Municipality apartments: /apartamentos-turisticos-<municipio>
+  if (normPath.startsWith('/apartamentos-turisticos-')) {
+    const rawMuni = normPath.slice('/apartamentos-turisticos-'.length).split('/')[0];
+    if (rawMuni === 'castellon') return APARTMENTS_SEO;
+    const slug = resolveMunicipalitySlug(rawMuni);
+    if (slug) return getApartmentsSeoForMunicipality(slug);
+    return APARTMENTS_SEO;
+  }
+
   if (
-    cleanPath === '/apartamentos-turisticos-castellon' ||
-    cleanPath.startsWith('/apartamentos-turisticos-castellon/') ||
-    cleanPath === '/apartamentos' ||
-    cleanPath.startsWith('/apartamentos/')
+    normPath === '/apartamentos' ||
+    normPath.startsWith('/apartamentos/')
   ) {
     return APARTMENTS_SEO;
   }
+
+  // Municipality laundry: /lavanderia-industrial-<municipio>
+  if (normPath.startsWith('/lavanderia-industrial-')) {
+    const rawMuni = normPath.slice('/lavanderia-industrial-'.length).split('/')[0];
+    if (rawMuni === 'castellon') return LAUNDRY_SEO;
+    const slug = resolveMunicipalitySlug(rawMuni);
+    if (slug) return getLaundrySeoForMunicipality(slug);
+    return LAUNDRY_SEO;
+  }
+
   if (
-    cleanPath === '/lavanderia-industrial' ||
-    cleanPath.startsWith('/lavanderia-industrial/') ||
-    cleanPath === '/laundry' ||
-    cleanPath.startsWith('/laundry/')
+    normPath === '/lavanderia-industrial' ||
+    normPath.startsWith('/lavanderia-industrial/') ||
+    normPath === '/laundry' ||
+    normPath.startsWith('/laundry/')
   ) {
     return LAUNDRY_SEO;
   }
-  if (
-    cleanPath === '/simulador' ||
-    cleanPath.startsWith('/simulador/') ||
-    cleanPath === '/simulador-rentabilidad' ||
-    cleanPath.startsWith('/simulador-rentabilidad/')
-  ) {
+
+  // Municipality simulator: /simulador-<municipio>
+  if (normPath === '/simulador-rentabilidad' || normPath.startsWith('/simulador-rentabilidad/')) {
+    return SIMULATOR_SEO;
+  }
+  if (normPath.startsWith('/simulador-')) {
+    const rawMuni = normPath.slice('/simulador-'.length).split('/')[0];
+    if (rawMuni === 'castellon') return SIMULATOR_SEO;
+    const slug = resolveMunicipalitySlug(rawMuni);
+    if (slug) return getSimulatorSeoForMunicipality(slug);
+    return SIMULATOR_SEO;
+  }
+
+  if (normPath === '/simulador' || normPath.startsWith('/simulador/')) {
     return SIMULATOR_SEO;
   }
 

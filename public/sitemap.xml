@@ -5,7 +5,7 @@
   <!-- 1. Página Principal: Gestión de Alojamientos Turísticos y Alquiler Vacacional en Castellón -->
   <url>
     <loc>https://www.azaharentals.com/</loc>
-    <lastmod>2026-10-26</lastmod>
+    <lastmod>2026-11-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
@@ -15,10 +15,10 @@
     </image:image>
   </url>
 
-  <!-- 2. Catálogo Oficial: Apartamentos Turísticos y Vacacionales en la Costa de Castellón -->
+  <!-- 2. Catálogo Provincial: Apartamentos Turísticos y Vacacionales en la Costa de Castellón -->
   <url>
     <loc>https://www.azaharentals.com/apartamentos-turisticos-castellon</loc>
-    <lastmod>2026-10-26</lastmod>
+    <lastmod>2026-11-20</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
     <image:image>
@@ -43,18 +43,136 @@
     </image:image>
   </url>
 
-  <!-- 3. Herramienta para Propietarios: Simulador de Rentabilidad e Ingresos Anuales -->
+  <!-- 2b. Apartamentos Turísticos por Municipio de Castellón -->
+  <url>
+    <loc>https://www.azaharentals.com/apartamentos-turisticos-peniscola</loc>
+    <lastmod>2026-11-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://www.azaharentals.com/images/peniscola_balcon_terraza_1788561222890.jpg</image:loc>
+      <image:title>Apartamentos Turísticos en Peñíscola - Azahar Rentals</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.azaharentals.com/apartamentos-turisticos-vinaros</loc>
+    <lastmod>2026-11-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.azaharentals.com/apartamentos-turisticos-benicarlo</loc>
+    <lastmod>2026-11-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://www.azaharentals.com/images/benicarlo_marina_apt_1788444573430.jpg</image:loc>
+      <image:title>Apartamentos Turísticos en Benicarló - Azahar Rentals</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.azaharentals.com/apartamentos-turisticos-oropesa-del-mar</loc>
+    <lastmod>2026-11-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.azaharentals.com/apartamentos-turisticos-benicassim</loc>
+    <lastmod>2026-11-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.azaharentals.com/apartamentos-turisticos-alcossebre</loc>
+    <lastmod>2026-11-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- 3. Simulador de Rentabilidad e Ingresos Anuales (Castellón y por Municipio) -->
   <url>
     <loc>https://www.azaharentals.com/simulador</loc>
-    <lastmod>2026-10-26</lastmod>
+    <lastmod>2026-11-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.azaharentals.com/simulador-peniscola</loc>
+    <lastmod>2026-11-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.azaharentals.com/simulador-vinaros</loc>
+    <lastmod>2026-11-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.azaharentals.com/simulador-benicarlo</loc>
+    <lastmod>2026-11-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.azaharentals.com/simulador-oropesa-del-mar</loc>
+    <lastmod>2026-11-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.azaharentals.com/simulador-benicassim</loc>
+    <lastmod>2026-11-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.azaharentals.com/simulador-alcossebre</loc>
+    <lastmod>2026-11-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
-  <!-- 4. Servicio B2B: Lavandería Industrial para Hoteles, Pisos Turísticos y Clínicas -->
+  <!-- 4. Lavandería Industrial B2B (Castellón y por Municipio) -->
   <url>
     <loc>https://www.azaharentals.com/lavanderia-industrial</loc>
-    <lastmod>2026-10-26</lastmod>
+    <lastmod>2026-11-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.azaharentals.com/lavanderia-industrial-peniscola</loc>
+    <lastmod>2026-11-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.azaharentals.com/lavanderia-industrial-vinaros</loc>
+    <lastmod>2026-11-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.azaharentals.com/lavanderia-industrial-benicarlo</loc>
+    <lastmod>2026-11-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.azaharentals.com/lavanderia-industrial-oropesa-del-mar</loc>
+    <lastmod>2026-11-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.azaharentals.com/lavanderia-industrial-benicassim</loc>
+    <lastmod>2026-11-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.azaharentals.com/lavanderia-industrial-alcossebre</loc>
+    <lastmod>2026-11-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
