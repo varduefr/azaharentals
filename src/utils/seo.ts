@@ -1,29 +1,33 @@
 /**
  * Dynamic SEO metadata manager for SPA pages
- * Ensures canonical tags, titles, descriptions, and OpenGraph tags
+ * Ensures canonical tags, titles, descriptions, robots, and OpenGraph tags
  * correctly match the active URL on www.azaharentals.com
  */
+import { BASE_CANONICAL_DOMAIN } from '../seo/routeMeta';
 
 export interface PageSeoOptions {
   title: string;
   description: string;
   path?: string;
   image?: string;
+  robots?: string;
 }
 
-export const BASE_CANONICAL_DOMAIN = 'https://www.azaharentals.com';
+export { BASE_CANONICAL_DOMAIN };
 
 export function updatePageSeo({
   title,
   description,
   path = '',
-  image = `${BASE_CANONICAL_DOMAIN}/images/castellon_hero_1788275752376.jpg`
+  image = `${BASE_CANONICAL_DOMAIN}/images/castellon_hero_1788275752376.jpg`,
+  robots = 'index, follow',
 }: PageSeoOptions) {
   // Normalize path
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  const fullCanonicalUrl = path === '/' || path === '' 
-    ? `${BASE_CANONICAL_DOMAIN}/` 
-    : `${BASE_CANONICAL_DOMAIN}${cleanPath}`;
+  const fullCanonicalUrl =
+    path === '/' || path === ''
+      ? `${BASE_CANONICAL_DOMAIN}/`
+      : `${BASE_CANONICAL_DOMAIN}${cleanPath}`;
 
   // Update Page Title
   document.title = title;
@@ -37,12 +41,26 @@ export function updatePageSeo({
   }
   metaDesc.setAttribute('content', description);
 
-  // Update Link Canonical
-  let canonicalLink = document.querySelector('link[rel="canonical"]');
+  // Update Robots Directive
+  let metaRobots = document.querySelector('meta[name="robots"]');
+  if (!metaRobots) {
+    metaRobots = document.createElement('meta');
+    metaRobots.setAttribute('name', 'robots');
+    document.head.appendChild(metaRobots);
+  }
+  metaRobots.setAttribute('content', robots);
+
+  // Update Link Canonical (ensure only one canonical tag exists)
+  const canonicalLinks = document.querySelectorAll('link[rel="canonical"]');
+  let canonicalLink = canonicalLinks[0] || null;
   if (!canonicalLink) {
     canonicalLink = document.createElement('link');
     canonicalLink.setAttribute('rel', 'canonical');
     document.head.appendChild(canonicalLink);
+  } else if (canonicalLinks.length > 1) {
+    for (let i = 1; i < canonicalLinks.length; i++) {
+      canonicalLinks[i].remove();
+    }
   }
   canonicalLink.setAttribute('href', fullCanonicalUrl);
 
@@ -58,6 +76,9 @@ export function updatePageSeo({
 
   const ogImage = document.querySelector('meta[property="og:image"]');
   if (ogImage) ogImage.setAttribute('content', image);
+
+  const ogImageSecure = document.querySelector('meta[property="og:image:secure_url"]');
+  if (ogImageSecure) ogImageSecure.setAttribute('content', image);
 
   // Update Twitter Tags
   const twTitle = document.querySelector('meta[name="twitter:title"]');

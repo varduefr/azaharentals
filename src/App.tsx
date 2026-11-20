@@ -18,70 +18,139 @@ import { LaundryPage } from './pages/LaundryPage';
 import { ApartmentsPage } from './pages/ApartmentsPage';
 import { AdminView } from './components/admin/AdminView';
 import { updatePageSeo } from './utils/seo';
+import {
+  ADMIN_SEO,
+  APARTMENTS_SEO,
+  DEFAULT_HOME_SEO,
+  LAUNDRY_SEO,
+  SIMULATOR_SEO,
+} from './seo/routeMeta';
+
+type AppPage = 'home' | 'simulator' | 'admin' | 'laundry' | 'apartments';
+
+function resolveRouteFromLocation(): {
+  page: AppPage;
+  apartmentId: string | null;
+  town?: string;
+  bedrooms?: number;
+} {
+  if (typeof window === 'undefined') {
+    return { page: 'home', apartmentId: null };
+  }
+
+  const pathname = window.location.pathname;
+  const hash = window.location.hash;
+  const searchParams = new URLSearchParams(window.location.search);
+
+  // 1. Pathname check takes absolute precedence over hash
+  if (pathname === '/admin' || pathname.startsWith('/admin')) {
+    return { page: 'admin', apartmentId: null };
+  }
+  if (
+    pathname === '/lavanderia-industrial' ||
+    pathname.startsWith('/lavanderia-industrial') ||
+    pathname === '/laundry' ||
+    pathname.startsWith('/laundry')
+  ) {
+    return { page: 'laundry', apartmentId: null };
+  }
+  if (
+    pathname === '/apartamentos-turisticos-castellon' ||
+    pathname.startsWith('/apartamentos-turisticos-castellon') ||
+    pathname === '/apartamentos' ||
+    pathname.startsWith('/apartamentos')
+  ) {
+    const aptId = searchParams.get('id') || searchParams.get('apt');
+    return { page: 'apartments', apartmentId: aptId };
+  }
+  if (
+    pathname === '/simulador' ||
+    pathname.startsWith('/simulador') ||
+    pathname === '/simulador-rentabilidad'
+  ) {
+    const muni = searchParams.get('muni') || searchParams.get('town') || undefined;
+    const hab = searchParams.get('hab') || searchParams.get('bedrooms');
+    return {
+      page: 'simulator',
+      apartmentId: null,
+      town: muni,
+      bedrooms: hab ? Number(hab) || 2 : undefined,
+    };
+  }
+
+  // 2. Fallbacks for query params or hash routing
+  if (hash === '#/admin' || hash === '#admin' || searchParams.get('page') === 'admin') {
+    return { page: 'admin', apartmentId: null };
+  }
+  if (
+    hash === '#/lavanderia-industrial' ||
+    hash === '#lavanderia-industrial' ||
+    hash === '#/laundry' ||
+    hash === '#laundry' ||
+    searchParams.get('page') === 'laundry' ||
+    searchParams.get('page') === 'lavanderia-industrial'
+  ) {
+    return { page: 'laundry', apartmentId: null };
+  }
+  if (
+    hash === '#/apartamentos-turisticos-castellon' ||
+    hash === '#apartamentos-turisticos-castellon' ||
+    searchParams.get('page') === 'apartamentos' ||
+    searchParams.get('page') === 'apartamentos-turisticos-castellon'
+  ) {
+    const aptId = searchParams.get('id') || searchParams.get('apt');
+    return { page: 'apartments', apartmentId: aptId };
+  }
+  if (hash === '#/simulador' || hash === '#simulador' || searchParams.get('page') === 'simulador') {
+    const muni = searchParams.get('muni') || searchParams.get('town') || undefined;
+    const hab = searchParams.get('hab') || searchParams.get('bedrooms');
+    return {
+      page: 'simulator',
+      apartmentId: null,
+      town: muni,
+      bedrooms: hab ? Number(hab) || 2 : undefined,
+    };
+  }
+
+  return { page: 'home', apartmentId: null };
+}
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'home' | 'simulator' | 'admin' | 'laundry' | 'apartments'>('home');
-  const [selectedApartmentId, setSelectedApartmentId] = useState<string | null>(null);
+  const initialRoute = resolveRouteFromLocation();
+  const [currentPage, setCurrentPage] = useState<AppPage>(initialRoute.page);
+  const [selectedApartmentId, setSelectedApartmentId] = useState<string | null>(initialRoute.apartmentId);
   const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
-  const [selectedTown, setSelectedTown] = useState('peniscola');
-  const [selectedBedrooms, setSelectedBedrooms] = useState(2);
+  const [selectedTown, setSelectedTown] = useState(initialRoute.town || 'peniscola');
+  const [selectedBedrooms, setSelectedBedrooms] = useState(initialRoute.bedrooms || 2);
   const [contactInitialData, setContactInitialData] = useState<any>(null);
 
-  // Initialize route from current browser URL & listen to browser back/forward buttons
+  // Sync SEO metadata whenever currentPage changes
+  useEffect(() => {
+    const seoMap: Record<AppPage, typeof DEFAULT_HOME_SEO> = {
+      home: DEFAULT_HOME_SEO,
+      apartments: APARTMENTS_SEO,
+      laundry: LAUNDRY_SEO,
+      simulator: SIMULATOR_SEO,
+      admin: ADMIN_SEO,
+    };
+    const seo = seoMap[currentPage];
+    updatePageSeo({
+      title: seo.title,
+      description: seo.description,
+      path: seo.canonicalPath,
+      image: seo.image,
+      robots: seo.robots,
+    });
+  }, [currentPage]);
+
+  // Listen to browser back/forward buttons and popstate
   useEffect(() => {
     const parseUrlAndSetRoute = () => {
-      const pathname = window.location.pathname;
-      const hash = window.location.hash;
-      const searchParams = new URLSearchParams(window.location.search);
-
-      // 1. Pathname check takes absolute precedence over hash
-      if (pathname === '/admin' || pathname.startsWith('/admin')) {
-        setCurrentPage('admin');
-        return;
-      }
-      if (pathname === '/lavanderia-industrial' || pathname.startsWith('/lavanderia-industrial') || pathname === '/laundry' || pathname.startsWith('/laundry')) {
-        setCurrentPage('laundry');
-        return;
-      }
-      if (pathname === '/apartamentos-turisticos-castellon' || pathname.startsWith('/apartamentos-turisticos-castellon') || pathname === '/apartamentos' || pathname.startsWith('/apartamentos')) {
-        setCurrentPage('apartments');
-        const aptId = searchParams.get('id') || searchParams.get('apt');
-        setSelectedApartmentId(aptId);
-        return;
-      }
-      if (pathname === '/simulador' || pathname.startsWith('/simulador') || pathname === '/simulador-rentabilidad') {
-        setCurrentPage('simulator');
-        const muni = searchParams.get('muni') || searchParams.get('town');
-        const hab = searchParams.get('hab') || searchParams.get('bedrooms');
-        if (muni) setSelectedTown(muni);
-        if (hab) setSelectedBedrooms(Number(hab) || 2);
-        return;
-      }
-
-      // 2. Fallbacks for query params or hash routing
-      if (hash === '#/admin' || hash === '#admin' || searchParams.get('page') === 'admin') {
-        setCurrentPage('admin');
-      } else if (hash === '#/lavanderia-industrial' || hash === '#lavanderia-industrial' || hash === '#/laundry' || hash === '#laundry' || searchParams.get('page') === 'laundry' || searchParams.get('page') === 'lavanderia-industrial') {
-        setCurrentPage('laundry');
-      } else if (hash === '#/apartamentos-turisticos-castellon' || hash === '#apartamentos-turisticos-castellon' || searchParams.get('page') === 'apartamentos' || searchParams.get('page') === 'apartamentos-turisticos-castellon') {
-        setCurrentPage('apartments');
-        const aptId = searchParams.get('id') || searchParams.get('apt');
-        setSelectedApartmentId(aptId);
-      } else if (hash === '#/simulador' || hash === '#simulador' || searchParams.get('page') === 'simulador') {
-        setCurrentPage('simulator');
-        const muni = searchParams.get('muni') || searchParams.get('town');
-        const hab = searchParams.get('hab') || searchParams.get('bedrooms');
-        if (muni) setSelectedTown(muni);
-        if (hab) setSelectedBedrooms(Number(hab) || 2);
-      } else {
-        setCurrentPage('home');
-        updatePageSeo({
-          title: "Gestión de Alojamientos Turísticos en Castellón | Azahar",
-          description: "Gestión integral de alquiler vacacional y alojamientos turísticos en Castellón. Maximizamos la rentabilidad para propietarios y tramitamos tu licencia.",
-          path: "/",
-          image: "https://www.azaharentals.com/images/castellon_hero_1788275752376.jpg"
-        });
-      }
+      const resolved = resolveRouteFromLocation();
+      setCurrentPage(resolved.page);
+      setSelectedApartmentId(resolved.apartmentId);
+      if (resolved.town) setSelectedTown(resolved.town);
+      if (resolved.bedrooms) setSelectedBedrooms(resolved.bedrooms);
     };
 
     parseUrlAndSetRoute();

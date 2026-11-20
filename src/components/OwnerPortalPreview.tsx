@@ -54,7 +54,7 @@ export const OwnerPortalPreview: React.FC = () => {
               <div className="w-3 h-3 rounded-full bg-amber-500/80"></div>
               <div className="w-3 h-3 rounded-full bg-cyan-500/80"></div>
               <span className="text-xs font-mono text-slate-400 ml-2">
-                app.azaharrentals.com/owner/peniscola-playa-norte
+                app.azaharentals.com/owner/peniscola-playa-norte
               </span>
             </div>
 

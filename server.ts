@@ -18,6 +18,7 @@ import {
   validateSessionToken,
   getAdminUser
 } from './server/auth';
+import { injectRouteSeoIntoHtml } from './src/seo/routeMeta';
 
 const PORT = 3000;
 
@@ -152,7 +153,7 @@ async function startServer() {
       const client = url.startsWith('https') ? https : http;
       const req = client.get(url, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; AzaharRentalsSync/1.0; +https://azaharrentals.com)'
+          'User-Agent': 'Mozilla/5.0 (compatible; AzaharRentalsSync/1.0; +https://www.azaharentals.com)'
         }
       }, (response) => {
         // Handle redirects
@@ -355,9 +356,18 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
+    const distIndexPath = path.join(distPath, 'index.html');
+    const baseDistHtml = fs.existsSync(distIndexPath)
+      ? fs.readFileSync(distIndexPath, 'utf-8')
+      : '';
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      if (baseDistHtml) {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.send(injectRouteSeoIntoHtml(baseDistHtml, req.path));
+        return;
+      }
+      res.sendFile(distIndexPath);
     });
   }
 

@@ -15,6 +15,7 @@ import { Footer } from '../components/Footer';
 import { useTheme } from '../context/ThemeContext';
 import { MUNICIPALITIES_MARKET_DATA } from '../data/marketStats';
 import { updatePageSeo } from '../utils/seo';
+import { SIMULATOR_SEO } from '../seo/routeMeta';
 
 interface SimulatorPageProps {
   initialLocation?: string;
@@ -44,20 +45,12 @@ export const SimulatorPage: React.FC<SimulatorPageProps> = ({
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
     updatePageSeo({
-      title: "Simulador de Rentabilidad Alquiler Vacacional Castellón 2025/2026 | Azahar Rentals",
-      description: "Calcula gratis los ingresos netos anuales de tu vivienda turística en Castellón (Peñíscola, Benicàssim, Vinaròs, Oropesa). Simulador con datos reales AirDNA y GVA.",
-      path: "/simulador",
-      image: "https://www.azaharentals.com/images/castellon_hero_1788275752376.jpg"
+      title: SIMULATOR_SEO.title,
+      description: SIMULATOR_SEO.description,
+      path: SIMULATOR_SEO.canonicalPath,
+      image: SIMULATOR_SEO.image,
+      robots: SIMULATOR_SEO.robots
     });
-
-    return () => {
-      updatePageSeo({
-        title: "Gestión de Alojamientos Turísticos en Castellón | Azahar",
-        description: "Gestión integral de alquiler vacacional y alojamientos turísticos en Castellón. Maximizamos la rentabilidad para propietarios y tramitamos tu licencia.",
-        path: "/",
-        image: "https://www.azaharentals.com/images/castellon_hero_1788275752376.jpg"
-      });
-    };
   }, []);
 
   const municipalityList = Object.values(MUNICIPALITIES_MARKET_DATA);

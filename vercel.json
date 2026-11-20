@@ -2,6 +2,8 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "cleanUrls": true,
+  "trailingSlash": false,
   "headers": [
     {
       "source": "/sitemap.xml",
@@ -36,7 +38,63 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!sitemap\\.xml|robots\\.txt|favicon\\.ico|favicon\\.svg|assets|images|platforms).*)",
+      "source": "/apartamentos-turisticos-castellon",
+      "destination": "/apartamentos-turisticos-castellon.html"
+    },
+    {
+      "source": "/apartamentos-turisticos-castellon/:path*",
+      "destination": "/apartamentos-turisticos-castellon.html"
+    },
+    {
+      "source": "/apartamentos",
+      "destination": "/apartamentos.html"
+    },
+    {
+      "source": "/apartamentos/:path*",
+      "destination": "/apartamentos.html"
+    },
+    {
+      "source": "/lavanderia-industrial",
+      "destination": "/lavanderia-industrial.html"
+    },
+    {
+      "source": "/lavanderia-industrial/:path*",
+      "destination": "/lavanderia-industrial.html"
+    },
+    {
+      "source": "/laundry",
+      "destination": "/laundry.html"
+    },
+    {
+      "source": "/laundry/:path*",
+      "destination": "/laundry.html"
+    },
+    {
+      "source": "/simulador",
+      "destination": "/simulador.html"
+    },
+    {
+      "source": "/simulador/:path*",
+      "destination": "/simulador.html"
+    },
+    {
+      "source": "/simulador-rentabilidad",
+      "destination": "/simulador-rentabilidad.html"
+    },
+    {
+      "source": "/simulador-rentabilidad/:path*",
+      "destination": "/simulador-rentabilidad.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/((?!sitemap\\.xml|robots\\.txt|favicon\\.ico|favicon\\.svg|assets|images|platforms|.*\\.html).*)",
       "destination": "/index.html"
     }
   ]

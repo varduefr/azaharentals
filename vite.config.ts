@@ -1,7 +1,9 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import fs from 'fs';
 import path from 'path';
 import {defineConfig} from 'vite';
+import {PRERENDER_ROUTE_FILES, injectRouteSeoIntoHtml} from './src/seo/routeMeta';
 
 function bookingIcalProxyPlugin() {
   return {
@@ -42,9 +44,33 @@ function bookingIcalProxyPlugin() {
   };
 }
 
+function routeSeoHtmlPlugin() {
+  return {
+    name: 'azahar-route-seo-html',
+    transformIndexHtml: {
+      order: 'post' as const,
+      handler(html: string, ctx: { originalUrl?: string }) {
+        const reqPath = ctx?.originalUrl || '/';
+        return injectRouteSeoIntoHtml(html, reqPath);
+      },
+    },
+    closeBundle() {
+      const distDir = path.resolve(__dirname, 'dist');
+      const indexPath = path.join(distDir, 'index.html');
+      if (!fs.existsSync(indexPath)) return;
+
+      const baseHtml = fs.readFileSync(indexPath, 'utf-8');
+      for (const { filename, meta } of PRERENDER_ROUTE_FILES) {
+        const routeHtml = injectRouteSeoIntoHtml(baseHtml, meta.canonicalPath);
+        fs.writeFileSync(path.join(distDir, filename), routeHtml, 'utf-8');
+      }
+    },
+  };
+}
+
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss(), bookingIcalProxyPlugin()],
+    plugins: [react(), tailwindcss(), bookingIcalProxyPlugin(), routeSeoHtmlPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
@@ -52,7 +78,7 @@ export default defineConfig(() => {
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
+      // Do not modify—file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},

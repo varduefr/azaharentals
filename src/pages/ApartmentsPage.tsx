@@ -43,6 +43,7 @@ import { PlatformsCarouselSection } from '../components/PlatformsCarouselSection
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import { updatePageSeo } from '../utils/seo';
+import { APARTMENTS_SEO } from '../seo/routeMeta';
 import { FEATURED_APARTMENTS, FeaturedApartment, ApartmentPhoto } from '../data/featuredApartments';
 import { 
   fetchApartments, 
@@ -184,20 +185,12 @@ export const ApartmentsPage: React.FC<ApartmentsPageProps> = ({
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     updatePageSeo({
-      title: "Apartamentos Turísticos en Castellón | Alquiler Vacacional Verificado | Azahar Rentals",
-      description: "Reserva los mejores apartamentos turísticos y vacacionales en la Costa de Castellón: Peñíscola, Benicarló y Alcover. Con licencias turísticas oficiales VT, check-in 24/7 y limpieza profesional hotelera.",
-      path: "/apartamentos-turisticos-castellon",
-      image: "https://www.azaharentals.com/images/peniscola_balcon_terraza_1788561222890.jpg"
+      title: APARTMENTS_SEO.title,
+      description: APARTMENTS_SEO.description,
+      path: APARTMENTS_SEO.canonicalPath,
+      image: APARTMENTS_SEO.image,
+      robots: APARTMENTS_SEO.robots
     });
-
-    return () => {
-      updatePageSeo({
-        title: "Gestión de Alojamientos Turísticos en Castellón | Azahar",
-        description: "Gestión integral de alquiler vacacional y alojamientos turísticos en Castellón. Maximizamos la rentabilidad para propietarios y tramitamos tu licencia.",
-        path: "/",
-        image: "https://www.azaharentals.com/images/castellon_hero_1788275752376.jpg"
-      });
-    };
   }, []);
 
   // Sync apartments with database & real-time updates

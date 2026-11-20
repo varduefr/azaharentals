@@ -50,3 +50,24 @@ Actúa como **Ingeniero de Software Senior** y **Especialista en SEO Técnico** 
 5. **Cumplimiento Normativo y Confianza en Real Estate:**
    - Visibilidad obligatoria de los números de registro turístico oficial (VT) en cada propiedad.
    - Referencia al marco legal vigente de la Generalitat Valenciana (Decreto ley 9/2024 de viviendas turísticas) para transmitir máxima autoridad y confianza a los propietarios.
+
+6. **Reglas Obligatorias al Crear Cualquier Nueva Página o Ruta:**
+   - **Canonical URL específica en HTML estático y SPA:** Nunca dejar que una nueva página apunte su `<link rel="canonical">` o `og:url` a la home (`/`). Para cada nueva ruta (por ejemplo, `/nueva-pagina`), es obligatorio:
+     1. Añadir su configuración (`canonicalPath: '/nueva-pagina'`, `title`, `description`, `image`, `robots`) en `src/seo/routeMeta.ts`, registrarla en `getRouteSeoForPath()` y añadir su archivo en `PRERENDER_ROUTE_FILES` (para que `vite.config.ts` genere `dist/nueva-pagina.html` con el `<link rel="canonical" href="https://www.azaharentals.com/nueva-pagina" />` ya inyectado en el HTML inicial).
+     2. Añadir su regla de `rewrites` en `vercel.json` **antes** del catch-all final hacia `/index.html` (apuntando a `/nueva-pagina.html`).
+     3. Integrar la ruta en `src/App.tsx` (`resolveRouteFromLocation()` y `seoMap`) y llamar a `updatePageSeo(...)` en el `useEffect` de la nueva página sin resetear el canonical a `/` en el cleanup.
+     4. Si la página es pública e indexable, añadir su URL `https://www.azaharentals.com/nueva-pagina` en `public/sitemap.xml` (y en el `<nav>` dentro de `<noscript>` en `index.html`).
+   - **Etiqueta de Google Analytics / GTM en todas las páginas (una sola vez):**
+     - Todas las páginas del sitio deben llevar exactamente **una** etiqueta de Google justo después de la etiqueta de apertura `<head>`:
+       ```html
+       <!-- Google tag (gtag.js) -->
+       <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-THJCSQ3K"></script>
+       <script>
+         window.dataLayer = window.dataLayer || [];
+         function gtag(){dataLayer.push(arguments);}
+         gtag('js', new Date());
+       </script>
+       ```
+     - Al derivar las rutas pre-renderizadas desde `index.html` (vía `routeSeoHtmlPlugin` en `vite.config.ts` y `server.ts`), esta etiqueta ya se hereda automáticamente una sola vez; si en el futuro se crea cualquier archivo `.html` independiente o plantilla separada, se debe incluir esta misma etiqueta justo después de `<head>` y verificar que no quede duplicada.
+   - **Dominio y correo oficiales:** Usar siempre `https://www.azaharentals.com` como dominio canónico y `info@azaharentals.com` como correo de contacto.
+

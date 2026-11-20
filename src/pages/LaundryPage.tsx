@@ -25,6 +25,7 @@ import {
   Check
 } from 'lucide-react';
 import { updatePageSeo } from '../utils/seo';
+import { LAUNDRY_SEO } from '../seo/routeMeta';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { useTheme } from '../context/ThemeContext';
@@ -65,20 +66,12 @@ export const LaundryPage: React.FC<LaundryPageProps> = ({
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     updatePageSeo({
-      title: "Lavandería Industrial en Castellón | Hoteles, Pisos Turísticos, Clínicas y Gimnasios | Azahar Rentals",
-      description: "Servicio de lavandería industrial en Castellón para hoteles, apartamentos turísticos, gimnasios y clínicas privadas. Limpieza de sábanas, toallas, batas y uniformes con lavado, secado y planchado calandra.",
-      path: "/lavanderia-industrial",
-      image: "https://www.azaharentals.com/images/castellon_hero_1788275752376.jpg"
+      title: LAUNDRY_SEO.title,
+      description: LAUNDRY_SEO.description,
+      path: LAUNDRY_SEO.canonicalPath,
+      image: LAUNDRY_SEO.image,
+      robots: LAUNDRY_SEO.robots
     });
-
-    return () => {
-      updatePageSeo({
-        title: "Gestión de Alojamientos Turísticos en Castellón | Azahar",
-        description: "Gestión integral de alquiler vacacional y alojamientos turísticos en Castellón. Maximizamos la rentabilidad para propietarios y tramitamos tu licencia.",
-        path: "/",
-        image: "https://www.azaharentals.com/images/castellon_hero_1788275752376.jpg"
-      });
-    };
   }, []);
 
   const toggleGarment = (id: string) => {
