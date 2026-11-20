@@ -2,7 +2,7 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "cleanUrls": true,
+  "cleanUrls": false,
   "trailingSlash": false,
   "headers": [
     {
@@ -274,7 +274,11 @@
       "destination": "/admin.html"
     },
     {
-      "source": "/((?!sitemap\\.xml|robots\\.txt|favicon\\.ico|favicon\\.svg|assets|images|platforms|.*\\.html).*)",
+      "source": "/google618472303f6a1fbe",
+      "destination": "/google618472303f6a1fbe.html"
+    },
+    {
+      "source": "/((?!sitemap\\.xml|robots\\.txt|favicon\\.ico|favicon\\.svg|google618472303f6a1fbe|assets|images|platforms|.*\\.html).*)",
       "destination": "/index.html"
     }
   ]
