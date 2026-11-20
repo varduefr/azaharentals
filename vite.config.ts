@@ -50,7 +50,7 @@ function routeSeoHtmlPlugin() {
     configureServer(server: any) {
       server.middlewares.use((req: any, res: any, next: any) => {
         const urlPath = (req.url || '').split('?')[0];
-        if (urlPath === '/sitemap.xml' || urlPath === '/site-maps.xml') {
+        if (urlPath === '/sitemap.xml') {
           res.statusCode = 200;
           res.setHeader('Content-Type', 'application/xml; charset=utf-8');
           res.setHeader('X-Content-Type-Options', 'nosniff');

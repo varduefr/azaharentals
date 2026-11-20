@@ -325,7 +325,7 @@ async function startServer() {
     });
   });
 
-  app.get(['/sitemap.xml', '/site-maps.xml'], (req, res) => {
+  app.get('/sitemap.xml', (req, res) => {
     const xml = generateSitemapXml();
     res.setHeader('Content-Type', 'application/xml; charset=utf-8');
     res.setHeader('X-Content-Type-Options', 'nosniff');
